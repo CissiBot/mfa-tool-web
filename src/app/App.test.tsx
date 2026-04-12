@@ -1,8 +1,8 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 
-import type { CardRecord, StorageError } from '../lib/storage'
+import { createCardRepository, type CardRecord, type StorageError, type StorageLike } from '../lib/storage'
 import App from './App'
-import type { CardCollectionSnapshot, CardCollectionStore } from './card-store'
+import { createCardCollectionStore, type CardCollectionSnapshot, type CardCollectionStore } from './card-store'
 import type { TimeStore } from './time-store'
 
 describe('App', () => {
@@ -25,6 +25,55 @@ describe('App', () => {
     expect(screen.getByTestId('empty-state')).toBeInTheDocument()
     expect(screen.getByText('你的验证码面板还是空的')).toBeInTheDocument()
     expect(screen.queryByTestId('otp-code')).not.toBeInTheDocument()
+  })
+
+  it('成功新增后会从空状态切换到真实卡片列表', () => {
+    const storage = createMemoryStorage()
+    const repository = createCardRepository({ storage })
+    const cardStore = createCardCollectionStore({ repository, targetWindow: undefined })
+
+    render(<App cardStore={cardStore} cardRepository={repository} timeStore={createMockTimeStore()} />)
+
+    fireEvent.change(screen.getByTestId('secret-input'), { target: { value: 'JBSW Y3DP EH PK3PXP' } })
+    fireEvent.change(screen.getByTestId('note-input'), { target: { value: 'GitHub' } })
+    fireEvent.click(screen.getByTestId('save-card-button'))
+
+    expect(screen.queryByTestId('empty-state')).not.toBeInTheDocument()
+    expect(screen.getByText('GitHub')).toBeInTheDocument()
+    expect(screen.getByText('JBSW Y3DP EH PK3PXP')).toBeInTheDocument()
+    expect(within(screen.getByTestId('card-list')).getByText('控制台蓝')).toBeInTheDocument()
+    expect(screen.getByTestId('otp-code')).toHaveTextContent('------')
+  })
+
+  it('重新挂载后仍能从同一份 localStorage 数据恢复卡片', () => {
+    const storage = createMemoryStorage()
+    const repository = createCardRepository({ storage })
+    const cardStore = createCardCollectionStore({ repository, targetWindow: undefined })
+    const timeStore = createMockTimeStore()
+    const view = render(<App cardStore={cardStore} cardRepository={repository} timeStore={timeStore} />)
+
+    fireEvent.change(screen.getByTestId('secret-input'), { target: { value: 'GEZD GNBV GY3T QOJQ' } })
+    fireEvent.change(screen.getByTestId('note-input'), { target: { value: 'AWS' } })
+    fireEvent.click(screen.getByTestId('color-option-rose'))
+    fireEvent.click(screen.getByTestId('save-card-button'))
+
+    expect(screen.getByText('AWS')).toBeInTheDocument()
+    view.unmount()
+
+    render(
+      <App
+        cardStore={createCardCollectionStore({
+          repository: createCardRepository({ storage }),
+          targetWindow: undefined,
+        })}
+        cardRepository={createCardRepository({ storage })}
+        timeStore={timeStore}
+      />,
+    )
+
+    expect(screen.getByText('AWS')).toBeInTheDocument()
+    expect(screen.getByText('GEZD GNBV GY3T QOJQ')).toBeInTheDocument()
+    expect(within(screen.getByTestId('card-list')).getByText('警示玫瑰')).toBeInTheDocument()
   })
 
   it('hydrated state 会渲染卡片列表而不是空状态', () => {
@@ -63,6 +112,22 @@ function createSnapshot(cards: CardRecord[] = [], error: StorageError | null = n
     hydrated: true,
     cards,
     error,
+  }
+}
+
+function createMemoryStorage(initialState: Record<string, string> = {}): StorageLike {
+  const store = new Map(Object.entries(initialState))
+
+  return {
+    getItem(key) {
+      return store.get(key) ?? null
+    },
+    setItem(key, value) {
+      store.set(key, value)
+    },
+    removeItem(key) {
+      store.delete(key)
+    },
   }
 }
 

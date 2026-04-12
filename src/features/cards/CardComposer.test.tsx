@@ -1,0 +1,131 @@
+import { fireEvent, render, screen } from '@testing-library/react'
+
+import { createCardRepository, STORAGE_KEY, type StorageLike } from '../../lib/storage'
+import { CardComposer } from './CardComposer'
+import { DEFAULT_CARD_COLOR } from './defaults'
+
+describe('CardComposer', () => {
+  it('成功保存时默认使用蓝色并清空表单', () => {
+    const storage = createMemoryStorage()
+    const onSaved = vi.fn()
+
+    render(
+      <CardComposer
+        repository={createTestRepository(storage)}
+        onSaved={onSaved}
+        createId={() => 'card-blue'}
+        now={() => '2026-04-12T12:00:00.000Z'}
+      />,
+    )
+
+    const secretInput = screen.getByTestId('secret-input') as HTMLInputElement
+    const noteInput = screen.getByTestId('note-input') as HTMLInputElement
+
+    fireEvent.change(secretInput, { target: { value: 'jbsw y3dp ehpk 3pxp' } })
+    fireEvent.change(noteInput, { target: { value: 'GitHub' } })
+    fireEvent.click(screen.getByTestId('save-card-button'))
+
+    expect(onSaved).toHaveBeenCalledTimes(1)
+    expect(secretInput).toHaveValue('')
+    expect(noteInput).toHaveValue('')
+    expect(screen.getByTestId(`color-option-${DEFAULT_CARD_COLOR}`)).toHaveAttribute('data-active', 'true')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(readStoredCards(storage)).toEqual([
+      {
+        id: 'card-blue',
+        rawSecret: 'jbsw y3dp ehpk 3pxp',
+        normalizedSecret: 'JBSWY3DPEHPK3PXP',
+        note: 'GitHub',
+        color: 'blue',
+        createdAt: '2026-04-12T12:00:00.000Z',
+        updatedAt: '2026-04-12T12:00:00.000Z',
+      },
+    ])
+  })
+
+  it('对非法 Base32 密钥给出明确错误', () => {
+    render(<CardComposer repository={createTestRepository(createMemoryStorage())} />)
+
+    fireEvent.change(screen.getByTestId('secret-input'), { target: { value: 'abc$' } })
+    fireEvent.click(screen.getByTestId('save-card-button'))
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Base32 密钥包含非法字符: $')
+  })
+
+  it('对重复 normalizedSecret 给出明确错误', () => {
+    const storage = createMemoryStorage({
+      [STORAGE_KEY]: JSON.stringify({
+        version: 1,
+        cards: [
+          {
+            id: 'card-existing',
+            rawSecret: 'JBSW Y3DP EH PK3PXP',
+            normalizedSecret: 'JBSWY3DPEHPK3PXP',
+            note: '已存在',
+            color: 'green',
+            createdAt: '2026-04-12T11:00:00.000Z',
+            updatedAt: '2026-04-12T11:00:00.000Z',
+          },
+        ],
+      }),
+    })
+
+    render(<CardComposer repository={createTestRepository(storage)} createId={() => 'card-duplicate'} />)
+
+    fireEvent.change(screen.getByTestId('secret-input'), { target: { value: 'jbsw y3dp ehpk 3pxp' } })
+    fireEvent.click(screen.getByTestId('save-card-button'))
+
+    expect(screen.getByRole('alert')).toHaveTextContent('该 Base32 密钥已经存在，请勿重复保存。')
+  })
+
+  it('对 localStorage 写入异常给出明确错误', () => {
+    render(<CardComposer repository={createTestRepository(createFailingStorage())} />)
+
+    fireEvent.change(screen.getByTestId('secret-input'), { target: { value: 'JBSWY3DPEHPK3PXP' } })
+    fireEvent.click(screen.getByTestId('save-card-button'))
+
+    expect(screen.getByRole('alert')).toHaveTextContent('写入 localStorage 失败')
+  })
+})
+
+function createTestRepository(storage: StorageLike) {
+  return createCardRepository({ storage })
+}
+
+function createMemoryStorage(initialState: Record<string, string> = {}): StorageLike {
+  const store = new Map(Object.entries(initialState))
+
+  return {
+    getItem(key) {
+      return store.get(key) ?? null
+    },
+    setItem(key, value) {
+      store.set(key, value)
+    },
+    removeItem(key) {
+      store.delete(key)
+    },
+  }
+}
+
+function createFailingStorage(): StorageLike {
+  return {
+    getItem() {
+      return null
+    },
+    setItem() {
+      throw new Error('quota exceeded')
+    },
+    removeItem() {},
+  }
+}
+
+function readStoredCards(storage: StorageLike) {
+  const rawValue = storage.getItem(STORAGE_KEY)
+
+  if (rawValue === null) {
+    return []
+  }
+
+  return JSON.parse(rawValue).cards
+}
