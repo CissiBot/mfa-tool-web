@@ -18,6 +18,7 @@ import {
 export interface CardRepository {
   load(): StorageResult<CardRecord[]>
   save(card: CardRecord): StorageResult<CardRecord[]>
+  reorder(ids: string[]): StorageResult<CardRecord[]>
   remove(id: string): StorageResult<CardRecord[]>
   merge(cards: CardRecord[]): StorageResult<MergeCardsSummary>
   importFromJson(json: string): StorageResult<MergeCardsSummary>
@@ -115,6 +116,31 @@ export function createCardRepository(options: CreateCardRepositoryOptions = {}):
       return {
         ok: true,
         value: nextCards,
+      }
+    },
+
+    reorder(ids) {
+      const loadedResult = this.load()
+
+      if (!loadedResult.ok) {
+        return loadedResult
+      }
+
+      const reorderedResult = reorderCards(loadedResult.value, ids)
+
+      if (!reorderedResult.ok) {
+        return reorderedResult
+      }
+
+      const writeResult = persistCards(options.storage, storageKey, reorderedResult.value)
+
+      if (!writeResult.ok) {
+        return writeResult
+      }
+
+      return {
+        ok: true,
+        value: reorderedResult.value,
       }
     },
 
@@ -244,6 +270,51 @@ function upsertCard(cards: CardRecord[], card: CardRecord): CardRecord[] {
   const nextCards = [...cards]
   nextCards[cardIndex] = card
   return nextCards
+}
+
+function reorderCards(cards: CardRecord[], ids: string[]): StorageResult<CardRecord[]> {
+  if (ids.length !== cards.length) {
+    return {
+      ok: false,
+      error: createError('invalid_entry', '重排后的卡片数量与现有卡片数量不一致', {
+        incomingCount: ids.length,
+        existingCount: cards.length,
+      }),
+    }
+  }
+
+  const cardMap = new Map(cards.map((card) => [card.id, card]))
+  const nextCards: CardRecord[] = []
+
+  for (const id of ids) {
+    const card = cardMap.get(id)
+
+    if (!card) {
+      return {
+        ok: false,
+        error: createError('invalid_entry', '重排顺序包含未知卡片', {
+          id,
+        }),
+      }
+    }
+
+    nextCards.push(card)
+    cardMap.delete(id)
+  }
+
+  if (cardMap.size > 0) {
+    return {
+      ok: false,
+      error: createError('invalid_entry', '重排顺序缺少现有卡片', {
+        missingIds: Array.from(cardMap.keys()),
+      }),
+    }
+  }
+
+  return {
+    ok: true,
+    value: nextCards,
+  }
 }
 
 function persistCards(

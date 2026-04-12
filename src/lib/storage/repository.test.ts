@@ -81,6 +81,46 @@ describe('createCardRepository', () => {
     })
   })
 
+  it('能按给定 id 顺序重排并在重载后保持顺序', () => {
+    const storage = createMemoryStorage()
+    const repository = createCardRepository({ storage })
+    const firstCard = createCard('card-1', 'JBSW Y3DP EH PK3PXP', 'JBSWY3DPEHPK3PXP', 'GitHub', 'blue')
+    const secondCard = createCard('card-2', 'GEZD GNBV GY3T QOJQ', 'GEZDGNBVGY3TQOJQ', 'AWS', 'green')
+    const thirdCard = createCard('card-3', 'MFRG GZDF MZTW Q2LK', 'MFRGGZDFMZTWQ2LK', 'Notion', 'violet')
+
+    repository.save(firstCard)
+    repository.save(secondCard)
+    repository.save(thirdCard)
+
+    expect(repository.reorder(['card-3', 'card-1', 'card-2'])).toEqual({
+      ok: true,
+      value: [thirdCard, firstCard, secondCard],
+    })
+
+    expect(createCardRepository({ storage }).load()).toEqual({
+      ok: true,
+      value: [thirdCard, firstCard, secondCard],
+    })
+  })
+
+  it('重排时若顺序缺少现有卡片会返回结构化错误', () => {
+    const storage = createMemoryStorage()
+    const repository = createCardRepository({ storage })
+    const firstCard = createCard('card-1', 'JBSW Y3DP EH PK3PXP', 'JBSWY3DPEHPK3PXP', 'GitHub', 'blue')
+    const secondCard = createCard('card-2', 'GEZD GNBV GY3T QOJQ', 'GEZDGNBVGY3TQOJQ', 'AWS', 'green')
+
+    repository.save(firstCard)
+    repository.save(secondCard)
+
+    expect(repository.reorder(['card-2'])).toEqual({
+      ok: false,
+      error: expect.objectContaining({
+        code: 'invalid_entry',
+        message: '重排后的卡片数量与现有卡片数量不一致',
+      }),
+    })
+  })
+
   it('当 localStorage 内容损坏时安全失败并返回结构化错误', () => {
     const storage = createMemoryStorage({
       [STORAGE_KEY]: '{bad json',
