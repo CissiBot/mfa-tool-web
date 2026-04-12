@@ -1,6 +1,6 @@
 # MFA 本地验证码网站
 
-一个基于 `Vite + React + TypeScript` 的纯前端静态 MFA/TOTP 工具站。所有验证码计算、卡片保存、导入导出都在当前浏览器内完成，适合部署到 `GitHub Pages + 自定义域名`。
+一个基于 `Vite + React + TypeScript` 的纯前端静态 MFA/TOTP 工具站。所有验证码计算、卡片保存、导入导出都在当前浏览器内完成，适合部署到 `GitHub Pages`，也可后续再接入自定义域名。
 
 ## 本地运行与验证
 
@@ -38,15 +38,24 @@ pnpm exec playwright test e2e/app.smoke.spec.ts --config=playwright.config.ts
 补充约定：
 
 - 产物目录固定为 `dist/`。
-- Vite `base` 保持默认 `/`，不要假设站点一定跑在 `/<repo>/` 子路径下；这样才兼容 GitHub Pages + 自定义域名。
-- 根目录 `CNAME` 会在 workflow 里被复制到 `dist/CNAME`，确保 Pages artifact 也携带自定义域名文件。
+- `vite.config.ts` 会自动判断发布场景：
+  - 本地开发 / 本地构建：`base = /`
+  - GitHub Actions 下的普通项目仓库 Pages：`base = /<repo>/`
+  - 配置了真实 `CNAME` 的自定义域名场景：`base = /`
+- 只有当根目录存在 `CNAME` 文件时，workflow 才会把它复制到 `dist/CNAME`。
+
+### 当前默认发布地址
+
+如果按当前仓库名 `mfa-tool-web` 直接发布到 GitHub Pages，默认地址会是：
+
+`https://cissibot.github.io/mfa-tool-web/`
 
 ## 自定义域名接入步骤
 
 ### 1. 准备 CNAME
 
-- 修改仓库根目录的 `CNAME` 文件，把占位域名替换成你的真实域名，例如：`mfa.example.com`。
-- GitHub Pages 部署时会读取产物中的 `CNAME`，所以 workflow 已额外把根目录 `CNAME` 注入到 `dist/`。
+- 在仓库根目录新建 `CNAME` 文件，并写入你的真实域名，例如：`mfa.example.com`。
+- GitHub Pages 部署时会读取产物中的 `CNAME`，所以 workflow 会在构建后把根目录 `CNAME` 注入到 `dist/`。
 
 ### 2. 配置 DNS 记录
 
@@ -73,7 +82,7 @@ pnpm exec playwright test e2e/app.smoke.spec.ts --config=playwright.config.ts
 
 `Enforce HTTPS` 的作用是强制浏览器走 HTTPS，避免用户继续通过明文 HTTP 访问站点；但它同样**不会**把本地 `localStorage` 变成安全存储，只是让传输入口符合现代浏览器的基本要求。
 
-## 为什么优先自定义域名，而不是默认 github.io
+## 为什么后续可以再接自定义域名，而不是一开始就强绑
 
 - 更容易让用户确认自己访问的是常用入口，减少“这是哪个仓库页”的认知负担。
 - 更利于后续迁移：即使未来不再使用 GitHub Pages，也可以继续沿用同一域名。
