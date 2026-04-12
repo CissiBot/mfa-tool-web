@@ -1,6 +1,6 @@
 import { useState, type ComponentProps } from 'react'
 
-import { CARD_COLORS, type CardColor } from '../../lib/storage'
+import { CARD_COLORS, type CardColor, type CardRecord } from '../../lib/storage'
 import type { CardRepository } from '../../lib/storage/repository'
 import { Base32SecretError, normalizeBase32Secret } from '../../lib/totp'
 import { COLOR_COPY } from './color-copy'
@@ -8,23 +8,34 @@ import { appCardRepository, DEFAULT_CARD_COLOR } from './defaults'
 
 export interface CardComposerProps {
   repository?: CardRepository
-  onSaved?: () => void
+  card?: CardRecord
+  mode?: 'create' | 'edit'
+  onSaved?: (card: CardRecord) => void
   createId?: () => string
   now?: () => string
+  compact?: boolean
+  secretInputRef?: ComponentProps<'input'>['ref']
+  noteInputRef?: ComponentProps<'input'>['ref']
 }
 
 type FormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 
 export function CardComposer({
   repository = appCardRepository,
+  card,
+  mode = 'create',
   onSaved,
   createId = createCardId,
   now = createTimestamp,
+  compact = false,
+  secretInputRef,
+  noteInputRef,
 }: CardComposerProps) {
-  const [secretDraft, setSecretDraft] = useState('')
-  const [noteDraft, setNoteDraft] = useState('')
-  const [selectedColor, setSelectedColor] = useState<CardColor>(DEFAULT_CARD_COLOR)
+  const [secretDraft, setSecretDraft] = useState(card?.rawSecret ?? '')
+  const [noteDraft, setNoteDraft] = useState(card?.note ?? '')
+  const [selectedColor, setSelectedColor] = useState<CardColor>(card?.color ?? DEFAULT_CARD_COLOR)
   const [feedback, setFeedback] = useState<string | null>(null)
+  const isEditing = mode === 'edit' && Boolean(card)
 
   const handleSubmit = (event: FormSubmitEvent) => {
     event.preventDefault()
@@ -43,26 +54,30 @@ export function CardComposer({
     }
 
     const timestamp = now()
-    const saveResult = repository.save({
-      id: createId(),
+    const nextCard: CardRecord = {
+      id: card?.id ?? createId(),
       rawSecret: secretDraft,
       normalizedSecret,
       note: noteDraft,
       color: selectedColor,
-      createdAt: timestamp,
+      createdAt: card?.createdAt ?? timestamp,
       updatedAt: timestamp,
-    })
+    }
+    const saveResult = repository.save(nextCard)
 
     if (!saveResult.ok) {
       setFeedback(formatRepositoryError(saveResult.error))
       return
     }
 
-    setSecretDraft('')
-    setNoteDraft('')
-    setSelectedColor(DEFAULT_CARD_COLOR)
+    if (!isEditing) {
+      setSecretDraft('')
+      setNoteDraft('')
+      setSelectedColor(DEFAULT_CARD_COLOR)
+    }
+
     setFeedback(null)
-    onSaved?.()
+    onSaved?.(nextCard)
   }
 
   return (
@@ -70,6 +85,7 @@ export function CardComposer({
       <label className="field-block" htmlFor="secret-input">
         <span className="field-block__label">MFA 密钥</span>
         <input
+          ref={secretInputRef}
           id="secret-input"
           data-testid="secret-input"
           name="secret"
@@ -89,6 +105,7 @@ export function CardComposer({
       <label className="field-block" htmlFor="note-input">
         <span className="field-block__label">备注</span>
         <input
+          ref={noteInputRef}
           id="note-input"
           data-testid="note-input"
           name="note"
@@ -141,9 +158,15 @@ export function CardComposer({
 
       <div className="composer-actions">
         <button data-testid="save-card-button" type="submit">
-          保存卡片
+          {isEditing ? '更新卡片' : '保存卡片'}
         </button>
-        <p>保存时会先规范化 Base32 密钥，再写入本地仓储；成功后立即刷新列表并保留当前页面布局。</p>
+        {!compact ? (
+          <p>
+            {isEditing
+              ? '更新时会保留原卡片 ID 与创建时间，只刷新备注、密钥、颜色和更新时间。'
+              : '保存时会先规范化 Base32 密钥，再写入本地仓储；成功后立即刷新列表并保留当前页面布局。'}
+          </p>
+        ) : null}
         {feedback ? (
           <div className="composer-feedback composer-feedback--error" role="alert">
             {feedback}
