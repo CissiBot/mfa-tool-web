@@ -44,6 +44,10 @@ jobs:
       - name: 构建站点
         run: pnpm build
 
+      - name: 注入自定义域名文件
+        if: ${{ hashFiles('CNAME') != '' }}
+        run: cp CNAME dist/CNAME
+
       - name: 上传 Pages Artifact
         uses: actions/upload-pages-artifact@v4
         with:
