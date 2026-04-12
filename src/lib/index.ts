@@ -1,2 +1,2 @@
-// 预留给后续基础能力：TOTP、存储与安全提示。
-export {}
+export * from './storage'
+export * from './totp'
