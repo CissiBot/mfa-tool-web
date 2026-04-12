@@ -4,7 +4,7 @@ import { execFileSync } from 'child_process'
 
 import { chromium, expect, test, type Browser, type Page } from '@playwright/test'
 
-import { clearCardStorage } from './helpers/storage'
+import { STORAGE_KEY } from './helpers/storage'
 
 const EDGE_EXECUTABLE_PATH = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
 const POWERSHELL_EXECUTABLE_PATH =
@@ -33,7 +33,9 @@ test.beforeEach(async () => {
 
   page = context.pages()[0] ?? (await context.newPage())
   await page.goto(BASE_URL)
-  await clearCardStorage(page)
+  await page.evaluate((key) => {
+    window.localStorage.removeItem(key)
+  }, STORAGE_KEY)
   await page.reload()
 })
 
@@ -52,13 +54,31 @@ test('首页可加载、可添加卡片，并暴露导入导出关键入口', as
 
   await expect(page.getByTestId('empty-state')).toHaveCount(0)
 
-  const card = page.locator('[data-testid^="card-"]').first()
+  const card = page.locator('article[data-testid^="card-"]').first()
 
   await expect(card).toContainText('Smoke 卡片')
   await expect(card.getByTestId('otp-code')).toHaveText(/\d{6}/)
   await expect(card.getByTestId('delete-card-button')).toBeVisible()
 
+  await page.reload()
+
+  const persistedCard = page.locator('article[data-testid^="card-"]').first()
+
+  await expect(page.getByTestId('empty-state')).toHaveCount(0)
+  await expect(page.getByTestId('card-list')).toContainText('Smoke 卡片')
+  await expect(persistedCard.getByTestId('otp-code')).toHaveText(/\d{6}/)
+
   await expect(page.getByTestId('import-button')).toBeVisible()
+
+  await page.getByTestId('import-file-input').setInputFiles({
+    name: 'broken.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from('{invalid'),
+  })
+
+  await expect(page.getByTestId('import-feedback')).toBeVisible()
+  await expect(page.getByTestId('import-feedback')).toContainText('导入失败')
+  await expect(page.getByTestId('import-feedback')).toContainText('导入数据不是合法的 JSON')
 
   const exportButton = page.getByTestId('export-button')
   await expect(exportButton).toBeEnabled()
