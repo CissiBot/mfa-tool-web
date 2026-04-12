@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { createPortal } from 'react-dom'
 
 export interface ConfirmationDialogProps {
   title: string
@@ -24,7 +25,7 @@ export function ConfirmationDialog({
   const titleId = useId()
   const descriptionId = useId()
 
-  return (
+  const dialog = (
     <div className="confirm-overlay" data-testid="confirm-dialog-backdrop">
       <div
         aria-describedby={descriptionId}
@@ -57,4 +58,10 @@ export function ConfirmationDialog({
       </div>
     </div>
   )
+
+  if (typeof document === 'undefined') {
+    return dialog
+  }
+
+  return createPortal(dialog, document.body)
 }

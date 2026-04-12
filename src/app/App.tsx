@@ -1,9 +1,11 @@
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FileDown, FileUp, Plus, X } from 'lucide-react'
 
 import { CardComposer, CardPreview, appCardRepository } from '../features/cards'
+import type { CardRecord } from '../lib/storage'
 import { ImportExportPanel } from '../features/import-export'
 import type { CardRepository } from '../lib/storage/repository'
-import { getTotpTimeWindow, TOTP_PERIOD_SECONDS } from '../lib/totp'
+import { getTotpTimeWindow } from '../lib/totp'
 import { appCardCollectionStore, type CardCollectionStore, useCardCollection } from './card-store'
 import { appTimeStore, type TimeStore, useTimeSnapshot } from './time-store'
 import './app.css'
@@ -14,6 +16,10 @@ interface AppProps {
   cardRepository?: CardRepository
 }
 
+type WorkspaceState =
+  | { mode: 'create'; focusField: 'secret' | 'note' }
+  | { mode: 'edit'; focusField: 'secret' | 'note'; card: CardRecord }
+
 function App({
   cardStore = appCardCollectionStore,
   timeStore = appTimeStore,
@@ -22,6 +28,146 @@ function App({
   const collection = useCardCollection(cardStore)
   const now = useTimeSnapshot(timeStore)
   const timeWindow = useMemo(() => getTotpTimeWindow(now), [now])
+  const [workspaceState, setWorkspaceState] = useState<WorkspaceState | null>(null)
+  const [draggedCardId, setDraggedCardId] = useState<string | null>(null)
+  const [dropTargetCardId, setDropTargetCardId] = useState<string | null>(null)
+  const [previewOrderIds, setPreviewOrderIds] = useState<string[] | null>(null)
+  const workspacePanelRef = useRef<HTMLElement | null>(null)
+  const secretInputRef = useRef<HTMLInputElement | null>(null)
+  const noteInputRef = useRef<HTMLInputElement | null>(null)
+  const isWorkspaceOpen = workspaceState !== null
+  const orderedCards = useMemo(
+    () => sortCardsByIds(collection.cards, previewOrderIds),
+    [collection.cards, previewOrderIds],
+  )
+
+  const closeWorkspace = useCallback(() => {
+    setWorkspaceState(null)
+  }, [])
+
+  useEffect(() => {
+    if (!isWorkspaceOpen) {
+      return undefined
+    }
+
+    const focusTarget = workspaceState?.focusField === 'note' ? noteInputRef.current : secretInputRef.current
+
+    focusTarget?.focus()
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeWorkspace()
+        return
+      }
+
+      if (event.key !== 'Tab') {
+        return
+      }
+
+      const panel = workspacePanelRef.current
+
+      if (!panel) {
+        return
+      }
+
+      const focusableSelectors = [
+        'button:not([disabled])',
+        'input:not([disabled])',
+        'select:not([disabled])',
+        'textarea:not([disabled])',
+        '[href]',
+        '[tabindex]:not([tabindex="-1"])',
+      ]
+      const focusableElements = Array.from(
+        panel.querySelectorAll<HTMLElement>(focusableSelectors.join(', ')),
+      ).filter((element) => !element.hasAttribute('hidden') && element.getAttribute('aria-hidden') !== 'true')
+
+      if (focusableElements.length === 0) {
+        return
+      }
+
+      const firstElement = focusableElements[0]
+      const lastElement = focusableElements[focusableElements.length - 1]
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault()
+        lastElement?.focus()
+      }
+
+      if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault()
+        firstElement?.focus()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [closeWorkspace, isWorkspaceOpen, workspaceState?.focusField])
+
+  const openCreateWorkspace = (focusField: 'secret' | 'note' = 'secret') => {
+    setWorkspaceState({ mode: 'create', focusField })
+  }
+
+  const openEditWorkspace = (card: CardRecord, focusField: 'secret' | 'note') => {
+    setWorkspaceState({ mode: 'edit', card, focusField })
+  }
+
+  const resetDragState = useCallback(() => {
+    setDraggedCardId(null)
+    setDropTargetCardId(null)
+    setPreviewOrderIds(null)
+  }, [])
+
+  const handleDragStart = useCallback(
+    (cardId: string) => {
+      setDraggedCardId(cardId)
+      setDropTargetCardId(cardId)
+      setPreviewOrderIds(collection.cards.map((card) => card.id))
+    },
+    [collection.cards],
+  )
+
+  const handlePreviewReorder = useCallback(
+    (targetCardId: string) => {
+      if (!draggedCardId || draggedCardId === targetCardId) {
+        return
+      }
+
+      setDropTargetCardId(targetCardId)
+      setPreviewOrderIds((current) => {
+        const baseIds = current ?? collection.cards.map((card) => card.id)
+        return moveCard(baseIds, draggedCardId, targetCardId)
+      })
+    },
+    [collection.cards, draggedCardId],
+  )
+
+  const handleDropReorder = (targetCardId: string) => {
+    if (!draggedCardId) {
+      resetDragState()
+      return
+    }
+
+    const currentIds = collection.cards.map((card) => card.id)
+    const orderedIds = previewOrderIds ?? moveCard(currentIds, draggedCardId, targetCardId)
+
+    resetDragState()
+
+    if (orderedIds.every((id, index) => id === currentIds[index])) {
+      return
+    }
+
+    const reorderResult = cardRepository.reorder(orderedIds)
+
+    if (!reorderResult.ok) {
+      return
+    }
+
+    cardStore.refresh()
+  }
 
   return (
     <>
@@ -29,114 +175,181 @@ function App({
         跳到主要内容
       </a>
 
-      <main className="app-shell" id="main-content">
-        <header className="shell-hero shell-panel">
-          <div className="shell-hero__copy">
-            <span className="section-tag">本地 MFA 工具站</span>
-            <h1>MFA 本地验证码网站</h1>
-            <p className="shell-hero__summary">
-              把常用验证码入口压缩进一页深色控制台：上方聚焦风险说明与录入路径，下方保留导入导出和未来卡片网格的稳定位置。
-            </p>
-          </div>
+      <main className="app-shell app-shell--minimal" id="main-content">
+        <h1 className="sr-only">MFA 卡片面板</h1>
 
-          <aside className="risk-panel" data-testid="risk-note" aria-label="风险说明">
-            <span className="risk-panel__label">风险说明</span>
-            <p>
-              所有计算都会留在当前浏览器里完成，但 <strong>localStorage 不是安全存储</strong>
-              ；后续导出文件同样会包含明文密钥，请只在受信任设备中使用。
-            </p>
-          </aside>
-        </header>
-
-        <section className="top-grid" aria-label="应用骨架布局">
-          <section className="shell-panel composer-panel" aria-labelledby="composer-title">
-            <div className="section-heading">
-              <span className="section-tag section-tag--muted">添加卡片</span>
-              <h2 id="composer-title">规范化密钥后写入本地卡片仓储</h2>
-              <p>录入区现在会直接校验 Base32、保存到 localStorage，并在成功后刷新下方卡片列表。</p>
-            </div>
-
-            <CardComposer repository={cardRepository} onSaved={() => cardStore.refresh()} />
-          </section>
-
-          <div className="side-stack">
-            <section
-              className="shell-panel io-panel"
-              aria-labelledby="import-export-title"
-              data-testid="import-export-section"
-            >
+        <div className="app-toolbar">
+          <div className="app-toolbar__actions">
+            <div className="app-toolbar__io">
               <ImportExportPanel
+                compact
+                toolbar
                 cards={collection.cards}
+                importIcon={FileUp}
+                exportIcon={FileDown}
                 repository={cardRepository}
+                showClearButton={false}
                 onCollectionChanged={() => cardStore.refresh()}
               />
-            </section>
-
-            <section className="shell-panel pulse-panel" aria-labelledby="pulse-title">
-              <div className="section-heading section-heading--compact">
-                <span className="section-tag section-tag--muted">共享时间源</span>
-                <h2 id="pulse-title">所有未来卡片共用同一秒级心跳</h2>
-              </div>
-
-              <div className="pulse-panel__meter">
-                <div>
-                  <span>当前窗口还剩</span>
-                  <strong>{timeWindow.remainingSeconds} 秒</strong>
-                </div>
-                <div>
-                  <span>统一刷新周期</span>
-                  <strong>{TOTP_PERIOD_SECONDS} 秒</strong>
-                </div>
-              </div>
-              <p>页面此时只消费统一时间快照，不在单卡上各自创建 `setInterval`。</p>
-            </section>
-          </div>
-
-        </section>
-
-        <section className="shell-panel card-section" aria-labelledby="card-list-title">
-          <div className="section-heading section-heading--split">
-             <div>
-               <span className="section-tag section-tag--muted">卡片列表</span>
-               <h2 id="card-list-title">保存成功后立即切换到真实 OTP 卡片</h2>
-               <p>所有卡片继续复用同一时间心跳：备注、遮挡密钥、六位验证码与刷新进度会一起随时间窗稳定更新。</p>
-             </div>
-
-            <div className="sync-chip" data-testid="time-heartbeat">
-              <span>共享心跳</span>
-              <strong>{timeWindow.remainingSeconds}s</strong>
             </div>
-          </div>
 
-          <div className="card-list" data-testid="card-list" aria-live="polite">
-            {!collection.hydrated ? (
-              <div className="status-card status-card--loading">正在同步本地卡片仓储…</div>
-            ) : collection.error ? (
-              <div className="status-card status-card--warning">
-                无法读取本地数据：{collection.error.message}
+            <button
+              className="app-toolbar__add"
+              data-testid="open-composer-button"
+              type="button"
+              onClick={() => {
+                openCreateWorkspace('secret')
+              }}
+            >
+              <Plus aria-hidden="true" size={16} strokeWidth={2.2} />
+              <span>添加卡片</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="card-list" data-testid="card-list" aria-live="polite">
+          {!collection.hydrated ? (
+            <div className="status-card status-card--loading">正在同步本地卡片…</div>
+          ) : collection.error ? (
+            <div className="status-card status-card--warning">无法读取本地数据：{collection.error.message}</div>
+          ) : collection.cards.length === 0 ? (
+            <div className="empty-state" data-testid="empty-state">
+              <span className="empty-state__badge">暂无卡片</span>
+              <p>点击“添加卡片”开始使用。</p>
+            </div>
+          ) : (
+            <>
+              <div className="card-list__table-head" data-testid="card-table-head" aria-hidden="true">
+                <span>备注 / 密钥</span>
+                <span>验证码</span>
+                <span>操作</span>
               </div>
-            ) : collection.cards.length === 0 ? (
-              <div className="empty-state" data-testid="empty-state">
-                <span className="empty-state__badge">暂无卡片</span>
-                <h3>你的验证码面板还是空的</h3>
-                <p>录入区已经可以直接保存卡片；成功写入后，这里会立刻从空状态切换到真实列表。</p>
-              </div>
-            ) : (
-              collection.cards.map((card) => (
+
+              {orderedCards.map((card) => (
                 <CardPreview
                   key={card.id}
                   card={card}
                   repository={cardRepository}
                   timeWindow={timeWindow}
-                  onRemoved={() => cardStore.refresh()}
+                  draggable
+                  isDragging={draggedCardId === card.id}
+                  isDropTarget={dropTargetCardId === card.id && draggedCardId !== card.id}
+                  onDragEnd={() => {
+                    resetDragState()
+                  }}
+                  onDragOver={() => {
+                    handlePreviewReorder(card.id)
+                  }}
+                  onDragStart={() => {
+                    handleDragStart(card.id)
+                  }}
+                  onDrop={() => {
+                    handleDropReorder(card.id)
+                  }}
+                  onEditNote={() => {
+                    openEditWorkspace(card, 'note')
+                  }}
+                  onEditSecret={() => {
+                    openEditWorkspace(card, 'secret')
+                  }}
                 />
-              ))
-            )}
-          </div>
-        </section>
+              ))}
+            </>
+          )}
+        </div>
       </main>
+
+      {isWorkspaceOpen ? (
+        <div
+          className="workspace-overlay"
+          data-testid="workspace-overlay"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              closeWorkspace()
+            }
+          }}
+        >
+          <section
+            aria-labelledby="workspace-title"
+            aria-modal="true"
+            className="workspace-panel shell-panel"
+            role="dialog"
+            ref={workspacePanelRef}
+          >
+            <div className="workspace-panel__header">
+              <div>
+                <h2 id="workspace-title">{workspaceState?.mode === 'edit' ? '编辑卡片' : '添加卡片'}</h2>
+              </div>
+
+              <button
+                className="workspace-panel__close"
+                data-testid="close-composer-button"
+                type="button"
+                onClick={closeWorkspace}
+              >
+                <X aria-hidden="true" size={16} strokeWidth={2.2} />
+                <span className="sr-only">关闭工作区</span>
+              </button>
+            </div>
+
+            <CardComposer
+              key={workspaceState?.mode === 'edit' ? `${workspaceState.card.id}-${workspaceState.focusField}` : `create-${workspaceState?.focusField ?? 'secret'}`}
+              card={workspaceState?.mode === 'edit' ? workspaceState.card : undefined}
+              compact
+              mode={workspaceState?.mode ?? 'create'}
+              noteInputRef={noteInputRef}
+              repository={cardRepository}
+              secretInputRef={secretInputRef}
+              onSaved={() => {
+                cardStore.refresh()
+                closeWorkspace()
+              }}
+            />
+          </section>
+        </div>
+      ) : null}
     </>
   )
 }
 
 export default App
+
+function moveCard(ids: string[], draggedId: string, targetId: string): string[] {
+  const draggedIndex = ids.indexOf(draggedId)
+  const targetIndex = ids.indexOf(targetId)
+
+  if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex) {
+    return ids
+  }
+
+  const nextIds = [...ids]
+  const [dragged] = nextIds.splice(draggedIndex, 1)
+  nextIds.splice(targetIndex, 0, dragged)
+  return nextIds
+}
+
+function sortCardsByIds(cards: CardRecord[], orderIds: string[] | null): CardRecord[] {
+  if (!orderIds) {
+    return cards
+  }
+
+  const cardMap = new Map(cards.map((card) => [card.id, card]))
+  const orderedCards: CardRecord[] = []
+
+  for (const id of orderIds) {
+    const card = cardMap.get(id)
+
+    if (!card) {
+      return cards
+    }
+
+    orderedCards.push(card)
+    cardMap.delete(id)
+  }
+
+  if (cardMap.size > 0) {
+    return cards
+  }
+
+  return orderedCards
+}

@@ -128,6 +128,77 @@ describe('ImportExportPanel', () => {
     expect(onCollectionChanged).toHaveBeenCalledTimes(1)
     expect(repository.load()).toEqual({ ok: true, value: [] })
   })
+
+  it('工具栏模式只显示导入导出按钮，不显示清空入口', () => {
+    const card = createCard()
+
+    render(<ImportExportPanel cards={[card]} compact toolbar showClearButton={false} />)
+
+    expect(screen.getByTestId('import-button')).toBeInTheDocument()
+    expect(screen.getByTestId('export-button')).toBeInTheDocument()
+    expect(screen.queryByTestId('clear-cards-button')).not.toBeInTheDocument()
+  })
+
+  it('工具栏模式下导出完成反馈会以浮层形式渲染', () => {
+    const repository = createCardRepository({ storage: createMemoryStorage(), now: () => '2026-04-12T12:00:00.000Z' })
+    const card = createCard()
+    const downloadFile = vi.fn()
+
+    repository.save(card)
+
+    const view = render(
+      <ImportExportPanel cards={[card]} compact downloadFile={downloadFile} repository={repository} toolbar />,
+    )
+
+    fireEvent.click(screen.getByTestId('export-button'))
+    fireEvent.click(screen.getByTestId('confirm-export-button'))
+
+    const feedback = screen.getByTestId('import-feedback')
+
+    expect(feedback).toHaveAttribute('data-layout', 'floating')
+    expect(feedback).toHaveTextContent('导出完成')
+    expect(view.container.querySelector('[data-testid="import-feedback"]')).toBeNull()
+  })
+
+  it('工具栏模式下导入结果 summary 也会以浮层形式渲染', async () => {
+    const repository = createCardRepository({ storage: createMemoryStorage() })
+    const view = render(
+      <ImportExportPanel
+        cards={[]}
+        compact
+        toolbar
+        readSelectedFile={vi.fn().mockResolvedValue(`{
+  "version": 1,
+  "exportedAt": "2026-04-12T00:00:00.000Z",
+  "cards": [
+    {
+      "id": "card-valid-1",
+      "rawSecret": "JBSW Y3DP EH PK3PXP",
+      "normalizedSecret": "JBSWY3DPEHPK3PXP",
+      "note": "有效示例",
+      "color": "blue",
+      "createdAt": "2026-04-12T00:00:00.000Z",
+      "updatedAt": "2026-04-12T00:00:00.000Z"
+    }
+  ]
+}`)}
+        repository={repository}
+      />, 
+    )
+
+    fireEvent.change(screen.getByTestId('import-file-input'), {
+      target: {
+        files: [new File(['ignored'], 'toolbar-import.json', { type: 'application/json' })],
+      },
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('import-feedback')).toHaveAttribute('data-layout', 'floating')
+    })
+
+    expect(screen.getByTestId('import-feedback')).toHaveTextContent('已处理文件：toolbar-import.json')
+    expect(view.container.querySelector('[data-testid="import-feedback"]')).toBeNull()
+  })
 })
 
 function createCard(overrides: Partial<CardRecord> = {}): CardRecord {

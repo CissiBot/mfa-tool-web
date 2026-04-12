@@ -1,4 +1,6 @@
 import { useRef, useState, type ChangeEvent } from 'react'
+import { createPortal } from 'react-dom'
+import type { LucideIcon } from 'lucide-react'
 
 import type { CardRecord } from '../../lib/storage'
 import type { CardRepository } from '../../lib/storage/repository'
@@ -20,6 +22,12 @@ export interface ImportExportPanelProps {
   onCollectionChanged?: () => void
   downloadFile?: (options: TextDownloadOptions) => void
   readSelectedFile?: (file: File) => Promise<string>
+  compact?: boolean
+  toolbar?: boolean
+  showClearButton?: boolean
+  importIcon?: LucideIcon
+  exportIcon?: LucideIcon
+  clearIcon?: LucideIcon
 }
 
 type ConfirmAction = 'export' | 'clear' | null
@@ -45,6 +53,12 @@ export function ImportExportPanel({
   onCollectionChanged,
   downloadFile = downloadTextFile,
   readSelectedFile = readFileText,
+  compact = false,
+  toolbar = false,
+  showClearButton = true,
+  importIcon: ImportIcon,
+  exportIcon: ExportIcon,
+  clearIcon: ClearIcon,
 }: ImportExportPanelProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null)
@@ -159,17 +173,24 @@ export function ImportExportPanel({
 
   return (
     <>
-      <div className="section-heading section-heading--compact">
-        <span className="section-tag section-tag--muted">导入 / 导出</span>
-        <h2 id="import-export-title">明文 JSON 只在确认后流动</h2>
-        <p>
-          导出会先二次确认“文件为明文，包含密钥”；导入会逐条复用 schema v1 校验，并明确反馈新增、跳过与失败原因。
-        </p>
-      </div>
+      {!compact ? (
+        <div className="section-heading section-heading--compact">
+          <span className="section-tag section-tag--muted">导入 / 导出</span>
+          <h2 id="import-export-title">明文 JSON 只在确认后流动</h2>
+          <p>
+            导出会先二次确认“文件为明文，包含密钥”；导入会逐条复用 schema v1 校验，并明确反馈新增、跳过与失败原因。
+          </p>
+        </div>
+      ) : null}
 
-      <div className="io-actions">
+      <div
+        aria-label={compact ? (toolbar ? '页面导入导出操作' : '卡片数据操作') : undefined}
+        className={`io-actions${compact ? ' io-actions--compact' : ''}${toolbar ? ' io-actions--toolbar' : ''}`}
+        role={compact ? 'group' : undefined}
+      >
         <button data-testid="import-button" type="button" onClick={() => fileInputRef.current?.click()}>
-          导入 JSON
+          {ImportIcon ? <ImportIcon aria-hidden="true" size={16} strokeWidth={2.1} /> : null}
+          <span>导入 JSON</span>
         </button>
         <button
           data-testid="export-button"
@@ -179,18 +200,22 @@ export function ImportExportPanel({
             setConfirmAction('export')
           }}
         >
-          导出 JSON
+          {ExportIcon ? <ExportIcon aria-hidden="true" size={16} strokeWidth={2.1} /> : null}
+          <span>导出 JSON</span>
         </button>
-        <button
-          data-testid="clear-cards-button"
-          disabled={cards.length === 0}
-          type="button"
-          onClick={() => {
-            setConfirmAction('clear')
-          }}
-        >
-          清空全部
-        </button>
+        {showClearButton ? (
+          <button
+            data-testid="clear-cards-button"
+            disabled={cards.length === 0}
+            type="button"
+            onClick={() => {
+              setConfirmAction('clear')
+            }}
+          >
+            {ClearIcon ? <ClearIcon aria-hidden="true" size={16} strokeWidth={2.1} /> : null}
+            <span>清空全部</span>
+          </button>
+        ) : null}
       </div>
 
       <input
@@ -204,12 +229,14 @@ export function ImportExportPanel({
         }}
       />
 
-      <div className="io-risk-strip" data-testid="storage-risk-strip">
-        <strong>本地处理 ≠ 安全存储</strong>
-        <p>验证码计算不会上传，但 localStorage 与导出文件都可能被同机其他人或恶意程序读取。</p>
-      </div>
+      {!compact ? (
+        <div className="io-risk-strip" data-testid="storage-risk-strip">
+          <strong>本地处理 ≠ 安全存储</strong>
+          <p>验证码计算不会上传，但 localStorage 与导出文件都可能被同机其他人或恶意程序读取。</p>
+        </div>
+      ) : null}
 
-      {feedback ? <FeedbackPanel feedback={feedback} /> : null}
+      {feedback ? <FeedbackPanel feedback={feedback} floating={toolbar} /> : null}
 
       {confirmAction === 'export' ? (
         <ConfirmationDialog
@@ -240,11 +267,12 @@ export function ImportExportPanel({
   )
 }
 
-function FeedbackPanel({ feedback }: { feedback: PanelFeedback }) {
-  return (
+function FeedbackPanel({ feedback, floating = false }: { feedback: PanelFeedback; floating?: boolean }) {
+  const panel = (
     <section
       aria-live="polite"
-      className="io-feedback"
+      className={`io-feedback${floating ? ' io-feedback--floating' : ''}`}
+      data-layout={floating ? 'floating' : 'inline'}
       data-testid="import-feedback"
       data-tone={feedback.tone}
     >
@@ -281,6 +309,12 @@ function FeedbackPanel({ feedback }: { feedback: PanelFeedback }) {
       ) : null}
     </section>
   )
+
+  if (!floating || typeof document === 'undefined') {
+    return panel
+  }
+
+  return createPortal(panel, document.body)
 }
 
 function resolveImportTone(summary: ImportCardsSummary): 'success' | 'warning' | 'danger' {
