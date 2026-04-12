@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
-import type { CardRecord } from '../../lib/storage'
+import { createCardRepository, type CardRecord, type StorageLike } from '../../lib/storage'
 import { generateTotpCode, getTotpTimeWindow } from '../../lib/totp'
 import { getCardNoteLabel, maskSecret } from './display'
 import { OtpCard } from './OtpCard'
@@ -70,6 +70,39 @@ describe('OtpCard', () => {
 
     expect(screen.getByRole('heading', { name: getCardNoteLabel('   ') })).toBeInTheDocument()
   })
+
+  it('删除单卡前需要确认，取消后保持不变，确认后调用仓储删除', () => {
+    const storage = createMemoryStorage()
+    const repository = createCardRepository({ storage })
+    const card = createCard()
+    const onRemoved = vi.fn()
+
+    repository.save(card)
+
+    render(
+      <OtpCard
+        card={card}
+        onRemoved={onRemoved}
+        repository={repository}
+        timeWindow={getTotpTimeWindow(Date.parse('2026-04-12T12:00:19.000Z'))}
+      />,
+    )
+
+    fireEvent.click(screen.getByTestId('delete-card-button'))
+    expect(screen.getByTestId('confirm-dialog')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId('cancel-confirm-button'))
+
+    expect(screen.queryByTestId('confirm-dialog')).not.toBeInTheDocument()
+    expect(repository.load()).toEqual({ ok: true, value: [card] })
+    expect(onRemoved).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByTestId('delete-card-button'))
+    fireEvent.click(screen.getByTestId('confirm-delete-button'))
+
+    expect(repository.load()).toEqual({ ok: true, value: [] })
+    expect(onRemoved).toHaveBeenCalledTimes(1)
+  })
 })
 
 function createCard(overrides: Partial<CardRecord> = {}): CardRecord {
@@ -82,5 +115,21 @@ function createCard(overrides: Partial<CardRecord> = {}): CardRecord {
     createdAt: '2026-04-12T00:00:00.000Z',
     updatedAt: '2026-04-12T00:00:00.000Z',
     ...overrides,
+  }
+}
+
+function createMemoryStorage(initialState: Record<string, string> = {}): StorageLike {
+  const store = new Map(Object.entries(initialState))
+
+  return {
+    getItem(key) {
+      return store.get(key) ?? null
+    },
+    setItem(key, value) {
+      store.set(key, value)
+    },
+    removeItem(key) {
+      store.delete(key)
+    },
   }
 }

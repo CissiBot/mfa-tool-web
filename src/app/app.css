@@ -227,7 +227,10 @@
 .field-block input:focus-visible,
 .color-option:has(input:focus-visible),
 .io-actions button:focus-visible,
-.composer-actions button:focus-visible {
+.composer-actions button:focus-visible,
+.otp-card__toggle:focus-visible,
+.otp-card__delete:focus-visible,
+.confirm-dialog__actions button:focus-visible {
   outline: none;
   box-shadow: var(--shadow-focus);
 }
@@ -364,7 +367,15 @@
   transition:
     border-color var(--duration-fast) var(--ease-standard),
     transform var(--duration-fast) var(--ease-standard),
-    opacity var(--duration-fast) var(--ease-standard);
+    opacity var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.composer-actions button:hover,
+.io-actions button:hover,
+.confirm-dialog__actions button:hover {
+  transform: translateY(-1px);
 }
 
 .composer-actions button:disabled,
@@ -377,6 +388,106 @@
   display: grid;
   gap: var(--space-3);
   margin-top: var(--space-6);
+}
+
+.io-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  border: 0;
+}
+
+.io-risk-strip,
+.io-feedback,
+.otp-card__feedback {
+  position: relative;
+  z-index: 1;
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-panel-strong);
+}
+
+.io-risk-strip {
+  display: grid;
+  gap: var(--space-2);
+  background: linear-gradient(180deg, var(--color-danger-soft), rgba(255, 255, 255, 0));
+}
+
+.io-risk-strip strong,
+.io-feedback strong,
+.otp-card__feedback {
+  color: var(--color-text-primary);
+}
+
+.io-risk-strip p,
+.io-feedback p {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.io-feedback[data-tone='success'] {
+  border-color: color-mix(in srgb, var(--color-success) 60%, var(--color-border-strong));
+  background: linear-gradient(180deg, var(--color-success-soft), rgba(255, 255, 255, 0));
+}
+
+.io-feedback[data-tone='warning'] {
+  border-color: color-mix(in srgb, var(--color-amber) 60%, var(--color-border-strong));
+  background: linear-gradient(180deg, var(--color-amber-soft), rgba(255, 255, 255, 0));
+}
+
+.io-feedback[data-tone='danger'],
+.otp-card__feedback--error {
+  border-color: color-mix(in srgb, var(--color-danger) 70%, var(--color-border-strong));
+  background: linear-gradient(180deg, var(--color-danger-soft), rgba(255, 255, 255, 0));
+}
+
+.io-feedback__header {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.io-feedback__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.io-feedback__metrics div {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-panel-muted);
+}
+
+.io-feedback__metrics span,
+.confirm-dialog p,
+.otp-card__feedback {
+  color: var(--color-text-secondary);
+}
+
+.io-feedback__metrics strong {
+  display: block;
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+}
+
+.io-feedback__issues {
+  margin: var(--space-4) 0 0;
+  padding-left: var(--space-5);
+  color: var(--color-text-secondary);
+}
+
+.io-feedback__issues li + li {
+  margin-top: var(--space-2);
 }
 
 .pulse-panel__meter,
@@ -665,18 +776,32 @@
     box-shadow var(--duration-fast) var(--ease-standard);
 }
 
-.otp-card__toggle:hover {
+.otp-card__toggle:hover,
+.otp-card__delete:hover {
   border-color: var(--card-accent);
   background: color-mix(in srgb, var(--card-accent) 18%, transparent);
 }
 
-.otp-card__toggle:active {
+.otp-card__toggle:active,
+.otp-card__delete:active,
+.confirm-dialog__actions button:active {
   transform: translateY(1px);
 }
 
-.otp-card__toggle:focus-visible {
-  outline: none;
-  box-shadow: var(--shadow-focus);
+.otp-card__delete {
+  min-height: var(--space-10);
+  padding: 0 var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 50%, var(--color-border));
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  color: var(--color-text-primary);
+  font-weight: 700;
+  white-space: nowrap;
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
 }
 
 .otp-card[data-revealed='true'] .otp-card__toggle {
@@ -700,6 +825,70 @@
   border-radius: var(--radius-pill);
   background: var(--color-progress-track);
   overflow: hidden;
+}
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: var(--space-6);
+  background: rgba(4, 8, 22, 0.76);
+  backdrop-filter: blur(12px);
+}
+
+.confirm-dialog {
+  width: min(100%, 520px);
+  padding: var(--space-7);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, var(--color-panel-sheen), var(--color-panel-sheen-soft)),
+    var(--color-panel-strong);
+  box-shadow: var(--shadow-panel-hover);
+}
+
+.confirm-dialog__copy {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.confirm-dialog__copy .section-tag {
+  margin-bottom: 0;
+}
+
+.confirm-dialog h3 {
+  margin: 0;
+  font-size: clamp(1.45rem, 2vw, 1.9rem);
+  color: var(--color-text-primary);
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  margin-top: var(--space-6);
+}
+
+.confirm-dialog__actions button {
+  min-height: 48px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-panel-muted);
+  color: var(--color-text-primary);
+  font-weight: 700;
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.confirm-dialog__confirm[data-tone='danger'] {
+  border-color: color-mix(in srgb, var(--color-danger) 55%, var(--color-border));
+  background: color-mix(in srgb, var(--color-danger) 15%, transparent);
 }
 
 .otp-card__progress-bar {
@@ -740,8 +929,10 @@
   .otp-card,
   .field-block input,
   .otp-card__toggle,
+  .otp-card__delete,
   .otp-card__progress-bar,
-  .skip-link {
+  .skip-link,
+  .confirm-dialog__actions button {
     animation: none;
     transition-duration: 1ms;
   }
@@ -790,7 +981,8 @@
   }
 
   .color-options,
-  .pulse-panel__meter {
+  .pulse-panel__meter,
+  .io-feedback__metrics {
     grid-template-columns: 1fr;
   }
 
@@ -799,7 +991,8 @@
   }
 
   .otp-card__secret-panel,
-  .otp-card__progress-head {
+  .otp-card__progress-head,
+  .confirm-dialog__actions {
     flex-direction: column;
     align-items: start;
   }

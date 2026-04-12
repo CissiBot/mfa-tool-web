@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 
 import { CardComposer, CardPreview, appCardRepository } from '../features/cards'
+import { ImportExportPanel } from '../features/import-export'
 import type { CardRepository } from '../lib/storage/repository'
 import { getTotpTimeWindow, TOTP_PERIOD_SECONDS } from '../lib/totp'
 import { appCardCollectionStore, type CardCollectionStore, useCardCollection } from './card-store'
@@ -64,20 +65,11 @@ function App({
               aria-labelledby="import-export-title"
               data-testid="import-export-section"
             >
-              <div className="section-heading section-heading--compact">
-                <span className="section-tag section-tag--muted">导入 / 导出</span>
-                <h2 id="import-export-title">先预留动作槽位，再接入明文确认流</h2>
-                <p>任务 7 会把文件读取、下载与风险确认接到这里；当前先固定区域层级与按钮定位。</p>
-              </div>
-
-              <div className="io-actions">
-                <button data-testid="import-button" type="button" disabled>
-                  导入 JSON
-                </button>
-                <button data-testid="export-button" type="button" disabled>
-                  导出 JSON
-                </button>
-              </div>
+              <ImportExportPanel
+                cards={collection.cards}
+                repository={cardRepository}
+                onCollectionChanged={() => cardStore.refresh()}
+              />
             </section>
 
             <section className="shell-panel pulse-panel" aria-labelledby="pulse-title">
@@ -131,7 +123,13 @@ function App({
               </div>
             ) : (
               collection.cards.map((card) => (
-                <CardPreview key={card.id} card={card} timeWindow={timeWindow} />
+                <CardPreview
+                  key={card.id}
+                  card={card}
+                  repository={cardRepository}
+                  timeWindow={timeWindow}
+                  onRemoved={() => cardStore.refresh()}
+                />
               ))
             )}
           </div>
