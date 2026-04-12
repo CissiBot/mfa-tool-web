@@ -76,7 +76,9 @@
 .composer-actions p,
 .pulse-panel p,
 .empty-state p,
-.otp-card__hint {
+.otp-card__progress-copy,
+.otp-card__countdown-label,
+.otp-card__meta-label {
   margin: 0;
   color: var(--color-text-secondary);
 }
@@ -398,11 +400,12 @@
 }
 
 .pulse-panel__meter span,
-.otp-card__hint,
+.otp-card__progress-copy,
 .otp-card__secret,
 .sync-chip span,
 .status-card,
-.otp-card__countdown {
+.otp-card__countdown-label,
+.otp-card__meta-label {
   color: var(--color-text-muted);
 }
 
@@ -509,7 +512,7 @@
 .otp-card {
   position: relative;
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-5);
   min-height: 280px;
   padding: var(--space-6);
   border: 1px solid var(--card-accent);
@@ -562,7 +565,10 @@
 }
 
 .otp-card__header,
-.otp-card__progress-track {
+.otp-card__secret-panel,
+.otp-card__progress-track,
+.otp-card__code-panel,
+.otp-card__progress-head {
   position: relative;
   z-index: 1;
 }
@@ -573,6 +579,13 @@
   align-items: start;
   justify-content: space-between;
   padding-left: var(--space-4);
+}
+
+.otp-card__header-side {
+  display: grid;
+  justify-items: end;
+  gap: var(--space-1);
+  flex: none;
 }
 
 .otp-card__eyebrow {
@@ -590,13 +603,41 @@
 
 .otp-card__countdown {
   font-family: var(--font-mono);
+  color: var(--color-text-primary);
+}
+
+.otp-card__countdown-label,
+.otp-card__meta-label,
+.otp-card__progress-copy {
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .otp-card__secret,
-.otp-card__hint,
 .otp-card__code,
-.otp-card__progress-track {
+.otp-card__progress-track,
+.otp-card__progress-head,
+.otp-card__secret-panel {
   padding-left: var(--space-4);
+}
+
+.otp-card__secret-panel,
+.otp-card__progress-head {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.otp-card__secret-copy,
+.otp-card__code-panel {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.otp-card__secret-copy {
+  min-width: 0;
 }
 
 .otp-card__secret {
@@ -604,6 +645,42 @@
   font-family: var(--font-mono);
   letter-spacing: 0.12em;
   white-space: pre-wrap;
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.otp-card__toggle {
+  min-height: var(--space-10);
+  padding: 0 var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--card-accent) 45%, var(--color-border));
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--card-accent) 10%, transparent);
+  color: var(--color-text-primary);
+  font-weight: 700;
+  white-space: nowrap;
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.otp-card__toggle:hover {
+  border-color: var(--card-accent);
+  background: color-mix(in srgb, var(--card-accent) 18%, transparent);
+}
+
+.otp-card__toggle:active {
+  transform: translateY(1px);
+}
+
+.otp-card__toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.otp-card[data-revealed='true'] .otp-card__toggle {
+  background: color-mix(in srgb, var(--card-accent) 24%, transparent);
 }
 
 .otp-card__code {
@@ -611,6 +688,11 @@
   font-size: clamp(2rem, 4vw, 2.8rem);
   font-weight: 700;
   letter-spacing: 0.16em;
+  text-shadow: 0 0 32px color-mix(in srgb, var(--card-accent) 28%, transparent);
+}
+
+.otp-card__progress-head {
+  margin-top: auto;
 }
 
 .otp-card__progress-track {
@@ -657,6 +739,7 @@
   .color-option,
   .otp-card,
   .field-block input,
+  .otp-card__toggle,
   .otp-card__progress-bar,
   .skip-link {
     animation: none;
@@ -713,5 +796,15 @@
 
   .card-list {
     grid-template-columns: 1fr;
+  }
+
+  .otp-card__secret-panel,
+  .otp-card__progress-head {
+    flex-direction: column;
+    align-items: start;
+  }
+
+  .otp-card__header-side {
+    justify-items: start;
   }
 }

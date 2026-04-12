@@ -21,7 +21,6 @@ function App({
   const collection = useCardCollection(cardStore)
   const now = useTimeSnapshot(timeStore)
   const timeWindow = useMemo(() => getTotpTimeWindow(now), [now])
-  const progressRatio = timeWindow.elapsedSeconds / timeWindow.periodSeconds
 
   return (
     <>
@@ -105,11 +104,11 @@ function App({
 
         <section className="shell-panel card-section" aria-labelledby="card-list-title">
           <div className="section-heading section-heading--split">
-            <div>
-              <span className="section-tag section-tag--muted">卡片列表</span>
-              <h2 id="card-list-title">保存成功后立即切换到真实卡片</h2>
-              <p>仓储订阅层仍负责 hydrate 与刷新；当前列表会直接渲染已保存的备注、原始密钥和颜色信息。</p>
-            </div>
+             <div>
+               <span className="section-tag section-tag--muted">卡片列表</span>
+               <h2 id="card-list-title">保存成功后立即切换到真实 OTP 卡片</h2>
+               <p>所有卡片继续复用同一时间心跳：备注、遮挡密钥、六位验证码与刷新进度会一起随时间窗稳定更新。</p>
+             </div>
 
             <div className="sync-chip" data-testid="time-heartbeat">
               <span>共享心跳</span>
@@ -132,12 +131,7 @@ function App({
               </div>
             ) : (
               collection.cards.map((card) => (
-                <CardPreview
-                  key={card.id}
-                  card={card}
-                  progressRatio={progressRatio}
-                  remainingSeconds={timeWindow.remainingSeconds}
-                />
+                <CardPreview key={card.id} card={card} timeWindow={timeWindow} />
               ))
             )}
           </div>

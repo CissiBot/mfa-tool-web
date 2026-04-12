@@ -1,4 +1,6 @@
 export { CardPreview } from './CardPreview'
+export { OtpCard } from './OtpCard'
+export { getCardNoteLabel, maskSecret } from './display'
 export { COLOR_COPY } from './color-copy'
 export { appCardRepository, DEFAULT_CARD_COLOR } from './defaults'
 export { CardComposer } from './CardComposer'
