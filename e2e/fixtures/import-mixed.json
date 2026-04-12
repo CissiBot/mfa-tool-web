@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "exportedAt": "2026-04-12T00:00:00.000Z",
+  "cards": [
+    {
+      "id": "card-valid-1",
+      "rawSecret": "JBSW Y3DP EH PK3PXP",
+      "normalizedSecret": "JBSWY3DPEHPK3PXP",
+      "note": "有效示例",
+      "color": "blue",
+      "createdAt": "2026-04-12T00:00:00.000Z",
+      "updatedAt": "2026-04-12T00:00:00.000Z"
+    },
+    {
+      "id": "card-duplicate-1",
+      "rawSecret": "JBSWY3DPEHPK3PXP",
+      "normalizedSecret": "JBSWY3DPEHPK3PXP",
+      "note": "重复示例",
+      "color": "green",
+      "createdAt": "2026-04-12T00:05:00.000Z",
+      "updatedAt": "2026-04-12T00:05:00.000Z"
+    },
+    {
+      "id": "card-invalid-1",
+      "rawSecret": "ABC*123",
+      "normalizedSecret": "ABC*123",
+      "note": "非法示例",
+      "color": "rose",
+      "createdAt": "2026-04-12T00:10:00.000Z",
+      "updatedAt": "2026-04-12T00:10:00.000Z"
+    }
+  ]
+}
