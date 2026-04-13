@@ -173,11 +173,17 @@ export function ImportExportPanel({
         className={`io-actions${compact ? ' io-actions--compact' : ''}${toolbar ? ' io-actions--toolbar' : ''}`}
         role={compact ? 'group' : undefined}
       >
-        <button data-testid="import-button" type="button" onClick={() => fileInputRef.current?.click()}>
+        <button
+          className="io-actions__button io-actions__button--import"
+          data-testid="import-button"
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+        >
           {ImportIcon ? <ImportIcon aria-hidden="true" size={16} strokeWidth={2.1} /> : null}
           <span>导入 JSON</span>
         </button>
         <button
+          className="io-actions__button io-actions__button--export"
           data-testid="export-button"
           disabled={cards.length === 0}
           type="button"
@@ -190,6 +196,7 @@ export function ImportExportPanel({
         </button>
         {showClearButton ? (
           <button
+            className="io-actions__button io-actions__button--clear"
             data-testid="clear-cards-button"
             disabled={cards.length === 0}
             type="button"

@@ -36,7 +36,11 @@ export function AppCardListSection({
   onOpenEditWorkspace,
 }: AppCardListSectionProps) {
   return (
-    <div className="card-list" data-testid="card-list" aria-live="polite">
+    <div
+      className="card-list"
+      data-drag-active={draggedCardId ? 'true' : 'false'}
+      data-testid="card-list"
+    >
       {!hydrated ? (
         <div className="status-card status-card--loading">正在同步本地卡片…</div>
       ) : error ? (

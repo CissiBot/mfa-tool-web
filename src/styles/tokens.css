@@ -7,11 +7,16 @@
   --color-bg-deep: #040816;
   --color-bg-canvas: #08101f;
   --color-bg-elevated: #0d1529;
+  --color-bg-base: #030712;
   --color-bg-glow: rgba(72, 120, 255, 0.2);
   --color-bg-highlight: rgba(61, 217, 245, 0.12);
+  --color-bg-aurora: rgba(116, 142, 255, 0.22);
+  --color-bg-aurora-alt: rgba(78, 242, 206, 0.12);
+  --color-bg-orbit: rgba(255, 146, 221, 0.11);
   --color-panel: rgba(8, 16, 31, 0.82);
   --color-panel-strong: rgba(12, 22, 40, 0.94);
   --color-panel-muted: rgba(13, 21, 41, 0.72);
+  --color-panel-glass: rgba(12, 22, 40, 0.7);
   --color-panel-sheen: rgba(255, 255, 255, 0.02);
   --color-panel-sheen-soft: rgba(255, 255, 255, 0);
   --color-border: rgba(148, 163, 184, 0.18);
@@ -68,6 +73,8 @@
 
   --shadow-panel: 0 24px 80px rgba(3, 8, 24, 0.4);
   --shadow-panel-hover: 0 30px 100px rgba(2, 8, 24, 0.5);
+  --shadow-floating: 0 18px 54px rgba(2, 8, 24, 0.4);
+  --shadow-elevated-glow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 18px 52px rgba(3, 8, 24, 0.45);
   --shadow-focus: 0 0 0 1px rgba(120, 169, 255, 0.55), 0 0 0 4px rgba(120, 169, 255, 0.14);
 
   --duration-fast: 160ms;

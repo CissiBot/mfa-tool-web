@@ -1,7 +1,7 @@
 .app-shell {
   width: min(var(--container-width), calc(100% - var(--space-8)));
   margin: 0 auto;
-  padding: var(--space-12) 0 var(--space-12);
+  padding: calc(var(--space-11) + var(--space-3)) 0 var(--space-12);
 }
 
 .app-shell--minimal {
@@ -36,11 +36,29 @@
 }
 
 .app-toolbar__actions {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
   align-items: flex-start;
   justify-content: flex-end;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--color-border-strong) 88%, rgba(255, 255, 255, 0.04));
+  border-radius: calc(var(--radius-lg) + 6px);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0)),
+    color-mix(in srgb, var(--color-panel-glass) 94%, transparent);
+  backdrop-filter: blur(22px) saturate(1.2);
+  box-shadow: var(--shadow-floating);
+}
+
+.app-toolbar__actions::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(120, 169, 255, 0.1), transparent 40%, rgba(100, 216, 245, 0.08) 82%, transparent);
+  pointer-events: none;
 }
 
 .app-toolbar__io {
@@ -48,28 +66,49 @@
 }
 
 .app-toolbar__add {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   display: inline-flex;
   gap: var(--space-2);
   align-items: center;
   justify-content: center;
   min-height: 44px;
   padding: 0 var(--space-5);
-  border: 1px solid color-mix(in srgb, var(--color-accent-blue) 48%, var(--color-border));
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--color-accent-blue) 14%, var(--color-panel-strong));
+  border: 1px solid color-mix(in srgb, var(--color-accent-blue) 55%, rgba(255, 255, 255, 0.08));
+  border-radius: calc(var(--radius-pill) - 2px);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.03)),
+    linear-gradient(135deg, color-mix(in srgb, var(--color-accent-blue) 28%, transparent), color-mix(in srgb, var(--color-accent-cyan) 12%, transparent));
   color: var(--color-text-primary);
   font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 14px 36px rgba(61, 100, 255, 0.22);
   transition:
     transform var(--duration-fast) var(--ease-standard),
     border-color var(--duration-fast) var(--ease-standard),
     background var(--duration-fast) var(--ease-standard),
-    box-shadow var(--duration-fast) var(--ease-standard);
+    box-shadow var(--duration-fast) var(--ease-standard),
+    opacity var(--duration-fast) var(--ease-standard);
+}
+
+.app-toolbar__add::before,
+.app-toolbar__io .io-actions button::before,
+.workspace-panel__close::before,
+.otp-card__action-button::before,
+.otp-card__drag-handle::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent 30%, transparent 65%, rgba(255, 255, 255, 0.08));
+  opacity: 0.9;
+  pointer-events: none;
 }
 
 .app-toolbar__add:hover {
-  transform: translateY(-1px);
-  border-color: var(--color-accent-blue);
-  background: color-mix(in srgb, var(--color-accent-blue) 22%, var(--color-panel-strong));
+  transform: translateY(-2px) scale(1.01);
+  border-color: color-mix(in srgb, var(--color-accent-cyan) 58%, rgba(255, 255, 255, 0.08));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 18px 42px rgba(70, 118, 255, 0.28);
 }
 
 .app-toolbar__add:focus-visible,
@@ -276,14 +315,19 @@
 .field-block input {
   min-height: 56px;
   padding: 0 var(--space-4);
-  border: 1px solid var(--color-border);
+  border: 1px solid color-mix(in srgb, var(--color-border-strong) 88%, rgba(255, 255, 255, 0.06));
   border-radius: var(--radius-md);
-  background: var(--color-panel-strong);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01)),
+    color-mix(in srgb, var(--color-panel-glass) 96%, transparent);
   color: var(--color-text-primary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), inset 0 -1px 0 rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(14px);
   transition:
     border-color var(--duration-fast) var(--ease-standard),
     box-shadow var(--duration-fast) var(--ease-standard),
-    transform var(--duration-fast) var(--ease-standard);
+    transform var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard);
 }
 
 .field-block input::placeholder {
@@ -291,7 +335,10 @@
 }
 
 .field-block input:hover {
-  border-color: var(--color-border-strong);
+  border-color: color-mix(in srgb, var(--color-accent-blue) 34%, var(--color-border-strong));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015)),
+    color-mix(in srgb, var(--color-panel-glass) 98%, transparent);
 }
 
 .field-block input:focus-visible,
@@ -309,6 +356,10 @@
 .field-block input:focus-visible {
   transform: translateY(-1px);
   border-color: var(--color-accent-blue);
+  box-shadow:
+    0 0 0 1px rgba(120, 169, 255, 0.58),
+    0 0 0 4px rgba(120, 169, 255, 0.12),
+    0 18px 40px rgba(35, 73, 170, 0.22);
 }
 
 .color-fieldset {
@@ -427,6 +478,9 @@
 
 .composer-actions button,
 .io-actions button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   min-height: 52px;
   padding: 0 var(--space-4);
   border: 1px solid var(--color-border);
@@ -481,8 +535,32 @@
   gap: var(--space-2);
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-pill);
+  border-radius: calc(var(--radius-pill) - 2px);
   padding: 0 var(--space-4);
+  border-color: color-mix(in srgb, var(--color-border-strong) 92%, rgba(255, 255, 255, 0.08));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02)),
+    color-mix(in srgb, var(--color-panel-glass) 95%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 12px 28px rgba(2, 8, 24, 0.24);
+}
+
+.app-toolbar__io .io-actions button:hover {
+  transform: translateY(-2px) scale(1.01);
+  border-color: color-mix(in srgb, var(--color-accent-cyan) 32%, var(--color-border-strong));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 18px 42px rgba(2, 8, 24, 0.32);
+}
+
+.app-toolbar__io .io-actions button:disabled,
+.app-toolbar__add:disabled {
+  box-shadow: none;
+}
+
+.app-toolbar__io .io-actions .io-actions__button--import {
+  color: color-mix(in srgb, var(--color-text-primary) 94%, var(--color-accent-cyan));
+}
+
+.app-toolbar__io .io-actions .io-actions__button--export {
+  color: color-mix(in srgb, var(--color-text-primary) 94%, var(--color-amber));
 }
 
 .io-file-input {
@@ -698,8 +776,21 @@
   position: relative;
   z-index: 1;
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-3);
   grid-template-columns: 1fr;
+  overflow: visible;
+}
+
+.card-list[data-drag-active='true'] {
+  isolation: isolate;
+}
+
+.app-shell[data-drag-active='true'] .app-toolbar {
+  opacity: 0.62;
+  transform: scale(0.992);
+  transition:
+    opacity var(--duration-base) var(--ease-standard),
+    transform var(--duration-base) var(--ease-standard);
 }
 
 .card-list__table-head,
@@ -761,31 +852,76 @@
 }
 
 .otp-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   display: grid;
   gap: 10px;
   min-height: 0;
   padding: 14px 16px 12px;
   border: 1px solid color-mix(in srgb, var(--card-accent) 26%, var(--color-border));
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--card-surface) 32%, var(--color-panel-strong));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0)),
+    color-mix(in srgb, var(--card-surface) 40%, var(--color-panel-strong));
   transition:
     box-shadow var(--duration-base) var(--ease-standard),
-    border-color var(--duration-base) var(--ease-standard);
-  box-shadow: none;
+    border-color var(--duration-base) var(--ease-standard),
+    transform var(--duration-base) var(--ease-standard),
+    opacity var(--duration-base) var(--ease-standard),
+    filter var(--duration-base) var(--ease-standard);
+  box-shadow: var(--shadow-elevated-glow);
+}
+
+.otp-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--card-accent) 18%, transparent), transparent 34%, rgba(255, 255, 255, 0.05) 70%, transparent);
+  opacity: 0.95;
+  pointer-events: none;
+}
+
+.otp-card::after {
+  content: '';
+  position: absolute;
+  inset: auto -20% -55% 35%;
+  height: 120px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--card-accent) 38%, transparent), transparent 66%);
+  opacity: 0.34;
+  filter: blur(20px);
+  pointer-events: none;
 }
 
 .otp-card:hover {
+  transform: translateY(-2px);
   border-color: color-mix(in srgb, var(--card-accent) 40%, var(--color-border-strong));
+  box-shadow: 0 28px 86px rgba(2, 8, 24, 0.5);
 }
 
 .otp-card[data-dragging='true'] {
-  opacity: 0.8;
+  opacity: 1;
+  transform: scale(1.045) translateY(-6px);
   border-color: var(--color-accent-cyan);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent-cyan) 42%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-accent-cyan) 42%, transparent),
+    0 28px 96px rgba(33, 87, 167, 0.46);
+  z-index: 4;
 }
 
 .otp-card[data-drop-target='true'] {
   border-color: color-mix(in srgb, var(--card-accent) 34%, var(--color-border-strong));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--card-accent) 36%, transparent), 0 20px 54px rgba(2, 8, 24, 0.32);
+}
+
+.card-list[data-drag-active='true'] .otp-card:not([data-dragging='true']) {
+  opacity: 0.7;
+  transform: scale(0.992);
+}
+
+.card-list[data-drag-active='true'] .otp-card[data-drop-target='true'] {
+  opacity: 0.96;
+  transform: scale(1.008);
 }
 
 .otp-card[data-color='slate'] {
@@ -903,14 +1039,32 @@
 }
 
 .otp-card__drag-handle {
+  position: relative;
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 28px;
+  min-width: 40px;
   min-height: 40px;
   flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, var(--color-border-strong) 88%, rgba(255, 255, 255, 0.05));
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-panel-strong) 94%, transparent);
   color: var(--color-text-muted);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   cursor: grab;
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard);
+}
+
+.otp-card__drag-handle:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--card-accent) 50%, var(--color-border-strong));
+  color: var(--color-text-primary);
 }
 
 .otp-card__drag-handle:active {
@@ -918,6 +1072,8 @@
 }
 
 .otp-card__action-button {
+  position: relative;
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -925,21 +1081,26 @@
   min-width: 40px;
   flex-shrink: 0;
   padding: 0 var(--space-3);
-  border: 1px solid var(--color-border);
+  border: 1px solid color-mix(in srgb, var(--color-border-strong) 90%, rgba(255, 255, 255, 0.05));
   border-radius: var(--radius-pill);
-  background: var(--color-panel-strong);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.01)),
+    color-mix(in srgb, var(--color-panel-strong) 96%, transparent);
   color: var(--color-text-primary);
   font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 14px 32px rgba(2, 8, 24, 0.22);
   transition:
     transform var(--duration-fast) var(--ease-standard),
     border-color var(--duration-fast) var(--ease-standard),
     background var(--duration-fast) var(--ease-standard),
-    box-shadow var(--duration-fast) var(--ease-standard);
+    box-shadow var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
 }
 
 .otp-card__action-button:hover {
-  transform: translateY(-1px);
-  border-color: var(--card-accent);
+  transform: translateY(-2px) scale(1.03);
+  border-color: color-mix(in srgb, var(--card-accent) 54%, rgba(255, 255, 255, 0.08));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 18px 40px rgba(2, 8, 24, 0.28);
 }
 
 .otp-card__action-button:disabled {
@@ -948,7 +1109,9 @@
 }
 
 .otp-card__action-button--copy {
-  background: color-mix(in srgb, var(--card-accent) 12%, var(--color-panel-strong));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
+    color-mix(in srgb, var(--card-accent) 18%, var(--color-panel-strong));
 }
 
 .otp-card__progress-track {
@@ -978,7 +1141,7 @@
   place-items: center;
   padding: var(--space-6);
   background: rgba(4, 8, 22, 0.72);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px) saturate(0.78);
 }
 
 .workspace-panel {
@@ -1013,17 +1176,22 @@
 }
 
 .workspace-panel__close {
+  position: relative;
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-height: 44px;
   min-width: 44px;
   padding: 0;
-  border: 1px solid var(--color-border);
+  border: 1px solid color-mix(in srgb, var(--color-border-strong) 92%, rgba(255, 255, 255, 0.05));
   border-radius: var(--radius-pill);
-  background: var(--color-panel-muted);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.01)),
+    color-mix(in srgb, var(--color-panel-muted) 96%, transparent);
   color: var(--color-text-primary);
   font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 14px 32px rgba(2, 8, 24, 0.22);
   transition:
     transform var(--duration-fast) var(--ease-standard),
     border-color var(--duration-fast) var(--ease-standard),
@@ -1032,8 +1200,8 @@
 }
 
 .workspace-panel__close:hover {
-  transform: translateY(-1px);
-  border-color: var(--color-border-strong);
+  transform: translateY(-2px) scale(1.03);
+  border-color: color-mix(in srgb, var(--color-accent-cyan) 35%, var(--color-border-strong));
 }
 
 .workspace-panel .composer-form {
@@ -1181,6 +1349,7 @@
 @media (prefers-reduced-motion: reduce) {
   .app-shell > *,
   .app-toolbar__add,
+  .app-toolbar,
   .color-option,
   .otp-card,
   .field-block input,
@@ -1189,6 +1358,7 @@
   .otp-card__progress-bar,
   .skip-link,
   .workspace-panel__close,
+  .otp-card__drag-handle,
   .confirm-dialog__actions button {
     animation: none;
     transition-duration: 1ms;

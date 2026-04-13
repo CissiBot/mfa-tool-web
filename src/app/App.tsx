@@ -112,7 +112,11 @@ function App({
         跳到主要内容
       </a>
 
-      <main className="app-shell app-shell--minimal" id="main-content">
+      <main
+        className="app-shell app-shell--minimal"
+        data-drag-active={draggedCardId ? 'true' : 'false'}
+        id="main-content"
+      >
         <h1 className="sr-only">MFA 卡片面板</h1>
 
         <div className="app-toolbar">
