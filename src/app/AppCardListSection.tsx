@@ -2,7 +2,7 @@ import { CardPreview } from '../features/cards'
 import type { CardRecord, StorageError } from '../lib/storage'
 import type { CardRepository } from '../lib/storage/repository'
 import type { TotpTimeWindow } from '../lib/totp'
-import type { WorkspaceFocusField } from './AppWorkspace'
+import type { WorkspaceFocusField } from './app-workspace-contract'
 
 interface AppCardListSectionProps {
   hydrated: boolean

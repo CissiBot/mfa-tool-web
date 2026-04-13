@@ -4,12 +4,7 @@ import { X } from 'lucide-react'
 import { CardComposer } from '../features/cards'
 import type { CardRecord } from '../lib/storage'
 import type { CardRepository } from '../lib/storage/repository'
-
-export type WorkspaceFocusField = 'secret' | 'note'
-
-export type WorkspaceState =
-  | { mode: 'create'; focusField: WorkspaceFocusField }
-  | { mode: 'edit'; focusField: WorkspaceFocusField; card: CardRecord }
+import type { WorkspaceState } from './app-workspace-contract'
 
 interface AppWorkspaceProps {
   workspaceState: WorkspaceState
