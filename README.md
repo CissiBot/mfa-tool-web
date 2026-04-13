@@ -1,109 +1,157 @@
-# MFA 本地验证码网站
+# MFA Web
 
-一个基于 `Vite + React + TypeScript` 的纯前端静态 MFA/TOTP 工具站。所有验证码计算、卡片保存、导入导出都在当前浏览器内完成，当前生产地址为：**https://mfa.cissi.top/**。
+一个面向日常使用的本地 TOTP 验证码工具网站。它把常用 MFA 卡片留在浏览器本地，适合快速查看、整理、备份与迁移。
 
-## 本地运行与验证
+**在线使用：<https://mfa.cissi.top/>**
+
+## 概览
+
+MFA Web 是一个纯前端静态站点：
+
+- 没有后端
+- 没有账号系统
+- 没有远程同步
+- 所有验证码计算都在当前浏览器内完成
+
+它适合这样的场景：你希望把常用 TOTP 验证码集中放在一个固定入口里，能快速新增、编辑、排序、导入、导出，但又不想维护一套服务端系统。
+
+## 核心特性
+
+- **本地卡片管理**：新增、编辑、拖动排序、删除 MFA 卡片
+- **实时验证码**：浏览器本地生成 6 位 TOTP，并自动刷新
+- **导入 / 导出**：支持明文 JSON 备份与恢复
+- **纯静态部署**：可以托管在静态平台，不依赖服务端运行时
+- **固定主入口**：生产环境统一使用 `https://mfa.cissi.top/`
+
+## 快速开始
+
+### 直接使用
+
+打开：<https://mfa.cissi.top/>
+
+### 本地开发
 
 ```bash
 pnpm install
+pnpm dev
+```
+
+### 本地验证
+
+```bash
 pnpm lint
 pnpm test
 pnpm build
 pnpm exec playwright test e2e/app.smoke.spec.ts --config=playwright.config.ts
 ```
 
-> `playwright.config.ts` 已使用 `webServer` 托管 `vite preview`，用于验证生产构建产物；不要额外自创另一套预览启动方式。
+> `playwright.config.ts` 已复用生产预览链路；如需做 E2E 验证，请沿用仓库现有方式，不要额外起另一套预览流程。
 
-## 这是什么 / 不是什么
+## 常见操作
 
-- 这是一个本地处理的验证码工具站：录入 Base32 密钥后，浏览器会在本地生成 6 位 TOTP 验证码。
-- 这是一个静态站：没有后端、没有账号系统、没有远程同步。
-- 这不是安全隔离产品：它强调易用与迁移，不承诺把密钥变成“安全存储”。
+### 添加一张卡片
 
-## 本地处理、localStorage 与导出风险
+1. 点击右上角“添加卡片”
+2. 输入 Base32 密钥
+3. 可选填写备注并选择颜色
+4. 保存后，卡片会立刻出现在列表中
 
-- 所有密钥处理都在本地浏览器里完成，不会上送到项目自己的服务器。
-- `localStorage` 只是方便长期保存卡片的本地容器，**不是安全存储**。同机其他人、恶意扩展、恶意程序，或系统层面的入侵都可能读到这些数据。
-- 导出 JSON 是明文文件，里面会保留用户原始输入的 `rawSecret` 文本。请避免把它保存到聊天记录、公共网盘、共享目录或不受信任设备。
-- 自定义域名可以提升信任感、品牌一致性与迁移性：以后就算迁移到别的静态托管平台，用户也更容易沿用同一入口；但它**不改变** `localStorage` 的本地设备风险，也不是安全隔离机制。
+### 编辑与整理卡片
 
-## 当前线上地址
+- 可以分别修改备注与密钥
+- 可以拖动卡片把手调整顺序
+- 拖动过程中列表会实时换位
 
-- 主地址：`https://mfa.cissi.top/`
-- Cloudflare Pages 默认子域：`https://mfa-tool-web.pages.dev/`
-- GitHub 仓库：`https://github.com/CissiBot/mfa-tool-web`
+### 导出备份
 
-## Cloudflare Pages 发布链路
+- 点击“导出 JSON”
+- 确认风险提示后下载备份文件
 
-当前生产环境使用 **Cloudflare Pages 连接 GitHub 仓库自动部署**：
+### 导入已有数据
 
-1. GitHub 仓库：`CissiBot/mfa-tool-web`
-2. 生产分支：`main`
-3. 构建命令：`pnpm build`
-4. 产物目录：`dist/`
-5. 生产自定义域名：`mfa.cissi.top`
+- 点击“导入 JSON”
+- 选择符合格式的备份文件
+- 页面会反馈新增、跳过与失败原因
 
-补充约定：
+## 重要边界与安全说明
 
-- 产物目录固定为 `dist/`。
-- `vite.config.ts` 会自动判断发布场景：
-  - 本地开发 / 本地构建：`base = /`
-  - GitHub Actions 下的普通项目仓库 Pages：`base = /<repo>/`
-  - 配置了真实 `CNAME` 的自定义域名场景：`base = /`
-- Cloudflare Pages 直接构建时，会自然使用根路径资源，不依赖仓库里的 `CNAME` 文件。
+### 这是什么
 
-## GitHub Pages 说明
+- 这是一个**本地处理**的验证码工具
+- 这是一个**静态网站**
+- 这是一个强调**易用、可迁移、可备份**的日常工具
 
-仓库里仍保留了 GitHub Pages 的 workflow 与兼容性 `base` 逻辑，主要用于保留备用发布链路与本地/CI 构建兼容性；**当前主生产通道已经不是 GitHub Pages，而是 Cloudflare Pages + `mfa.cissi.top`。**
+### 这不是什么
 
-如果以后重新启用 GitHub Pages 项目仓库发布，地址会是：
+- 这不是安全隔离产品
+- 这不是硬件令牌替代品
+- 这不是零信任密钥保管库
 
-`https://cissibot.github.io/mfa-tool-web/`
+### 关于 localStorage 与导出文件
 
-## 自定义域名接入步骤
+- 卡片默认保存在浏览器 `localStorage`
+- 导出 JSON 会保留原始 `rawSecret` 文本，属于**明文备份**
+- 同机其他人、恶意扩展、恶意程序或系统级入侵，都可能读取这些数据
 
-当前线上已绑定的自定义域名是：`mfa.cissi.top`。
+因此：
 
-如果后续要迁移到别的域名，建议按 **Cloudflare Pages 自定义域名** 的方式处理，而不是回到仓库内写死占位 `CNAME`。
+- 请把它当成“方便使用的本地工具”，不要把它理解成“安全存储”
+- 请避免把导出文件保存到聊天记录、公共网盘、共享目录或不受信任设备
 
-### 1. 在 Cloudflare Pages 中添加域名
+### 关于自定义域名
 
-- 把生产域名添加到 Cloudflare Pages 项目。
-- 等域名状态进入 `active` 后，再继续 HTTPS 与代理设置。
+自定义域名提升的是：
 
-### 2. 配置 DNS 记录
+- 固定入口
+- 品牌一致性
+- 平台迁移时的可持续性
 
-如果你使用子域名（推荐，例如 `mfa.example.com`）：
+它**不会提升本地数据的安全等级**。
 
-- 添加一条 `CNAME` 记录，让子域指向对应的 `*.pages.dev`
+## 技术参考
 
-当前这个项目的实际绑定就是：`mfa.cissi.top -> mfa-tool-web.pages.dev`
+### TOTP 固定规则
 
-### 3. 等待证书与 HTTPS 收敛
+- 哈希算法：`SHA-1`
+- 验证码位数：`6`
+- 时间步长：`30 秒`
 
-- 当 Cloudflare Pages 域名状态与证书都准备完成后，再决定是否开启代理（橙云）。
-- 对这个项目，必须先让域名验证收敛，再开代理，否则容易卡在校验阶段。
+### 存储约定
 
-### 4. 仓库 About / Homepage
+- localStorage key：`mfa-web/cards:v1`
+- storage schema version：`1`
 
-建议把 GitHub 仓库 About 里的 Homepage 直接指向生产地址：
+### 目录结构
 
-`https://mfa.cissi.top/`
+- `src/app/`：应用壳层、页面装配、全局状态
+- `src/features/cards/`：卡片录入、展示、编辑、排序相关交互
+- `src/features/import-export/`：导入导出、风险确认与反馈提示
+- `src/lib/storage/`：存储 schema、仓储与数据约束
+- `src/lib/totp/`：Base32 规范化与 TOTP 计算
+- `e2e/`：Playwright smoke 用例与辅助数据
 
-这样用户在 GitHub 仓库首页就能直接看到主站入口。
+## 维护者参考
 
-## 为什么后续可以再接自定义域名，而不是一开始就强绑
+当前生产站点以 **Cloudflare Pages** 为主：
 
-- 更容易让用户确认自己访问的是常用入口，减少“这是哪个仓库页”的认知负担。
-- 更利于后续迁移：即使未来不再使用 GitHub Pages，也可以继续沿用同一域名。
-- 更适合放进个人书签、密码管理器备注或团队内部说明文档。
+- 生产分支：`main`
+- 构建命令：`pnpm build`
+- 输出目录：`dist`
+- 生产域名：`mfa.cissi.top`
 
-但再次强调：**自定义域名提升的是入口信任感与迁移性，不是本地数据安全等级。**
+维护时只需要记住这几条：
 
-## 目录概览
+- 当前 Vite 配置兼容本地开发与根路径静态托管
+- 自定义域名以 Cloudflare Pages 的域名与 DNS 配置为准
+- 若部署链路发生变化，应优先同步更新本 README 的线上入口与维护说明
 
-- `src/app/`：应用壳层与页面装配
-- `src/features/cards/`：卡片录入、展示、删除
-- `src/features/import-export/`：导入导出、风险确认
-- `src/lib/`：TOTP、存储 schema 与仓储逻辑
-- `e2e/`：Playwright smoke E2E 与辅助数据
+## 贡献与维护
+
+如果你要继续改这个项目，建议优先关注：
+
+- 卡片交互是否清晰稳定
+- 导入导出与反馈层的可读性
+- localStorage / 导出文件的风险提示是否明确
+- 部署说明是否仍与当前线上链路一致
+
+欢迎通过当前仓库继续提交问题、改进说明或发起变更。
