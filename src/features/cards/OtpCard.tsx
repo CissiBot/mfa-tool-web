@@ -143,12 +143,19 @@ export function OtpCard({
           <span
             className="otp-card__drag-handle"
             data-testid="drag-handle"
+            aria-label={`拖动排序：${noteLabel}`}
             draggable={draggable}
             title={`拖动排序：${noteLabel}`}
             onDragEnd={onDragEnd}
             onDragStart={onDragStart}
           >
-            <GripVertical size={15} strokeWidth={2} />
+            <span className="otp-card__drag-icon" aria-hidden="true">
+              <GripVertical size={15} strokeWidth={2} />
+            </span>
+            <span className="otp-card__drag-accent" aria-hidden="true" />
+            <span className="otp-card__drag-tooltip" aria-hidden="true">
+              拖动排序
+            </span>
           </span>
 
           <button
