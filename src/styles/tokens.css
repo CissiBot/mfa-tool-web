@@ -13,6 +13,8 @@
   --color-bg-aurora: rgba(116, 142, 255, 0.22);
   --color-bg-aurora-alt: rgba(78, 242, 206, 0.12);
   --color-bg-orbit: rgba(255, 146, 221, 0.11);
+  --color-bg-star: rgba(255, 255, 255, 0.62);
+  --color-bg-star-soft: rgba(120, 169, 255, 0.34);
   --color-panel: rgba(8, 16, 31, 0.82);
   --color-panel-strong: rgba(12, 22, 40, 0.94);
   --color-panel-muted: rgba(13, 21, 41, 0.72);
@@ -32,6 +34,8 @@
   --color-accent-blue-sheen: rgba(120, 169, 255, 0.08);
   --color-accent-cyan: #64d8f5;
   --color-accent-cyan-soft: rgba(100, 216, 245, 0.16);
+  --color-accent-violet: #8b5cf6;
+  --color-accent-violet-soft: rgba(139, 92, 246, 0.18);
   --color-danger: #ff8e9e;
   --color-danger-soft: rgba(255, 142, 158, 0.14);
   --color-success: #82ddb4;
