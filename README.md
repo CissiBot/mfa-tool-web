@@ -6,6 +6,16 @@
 
 一个面向日常使用的本地 TOTP 验证码工具网站，用来集中管理常用 MFA 卡片，并在浏览器中直接查看、复制、排序、备份与迁移验证码。
 
+<p align="center">
+  <a href="https://vite.dev/"><img alt="Vite" src="https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white" /></a>
+  <a href="https://react.dev/"><img alt="React" src="https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB" /></a>
+  <a href="https://www.typescriptlang.org/"><img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" /></a>
+  <a href="https://pnpm.io/"><img alt="pnpm" src="https://img.shields.io/badge/pnpm-F69220?logo=pnpm&logoColor=white" /></a>
+  <a href="https://vitest.dev/"><img alt="Vitest" src="https://img.shields.io/badge/Vitest-6E9F18?logo=vitest&logoColor=white" /></a>
+  <a href="https://playwright.dev/"><img alt="Playwright" src="https://img.shields.io/badge/Playwright-2EAD33?logo=playwright&logoColor=white" /></a>
+  <a href="https://docs.github.com/pages"><img alt="GitHub Pages" src="https://img.shields.io/badge/GitHub%20Pages-121013?logo=github&logoColor=white" /></a>
+</p>
+
 **在线使用：<https://mfa.cissi.top/>**
 
 > [!IMPORTANT]
@@ -13,9 +23,11 @@
 
 ## 为什么使用 MFA Web
 
+MFA Web 是一个基于 **Vite + React + TypeScript** 构建的纯前端应用，界面、验证码计算、卡片管理与导入导出都直接运行在浏览器中。
+
 - **固定入口**：把常用 TOTP 卡片集中放在一个稳定地址里
 - **纯前端运行**：验证码计算全部在浏览器内完成，不依赖后端
-- **本地整理能力**：支持新增、编辑、拖动排序与快速复制验证码
+- **本地整理能力**：支持新增、编辑、删除、拖动排序与快速复制验证码
 - **备份迁移直接**：支持明文 JSON 导入 / 导出，适合临时迁移与本地备份
 - **规则简单稳定**：固定使用标准 TOTP（SHA-1、6 位、30 秒）
 
@@ -41,8 +53,9 @@ MFA Web 适合以下场景：
 
 - 新增卡片
 - 分别修改备注与密钥
+- 删除单张卡片前会先确认
 - 拖动卡片实时排序
-- 为卡片选择颜色
+- 新增卡片时自动轮换默认颜色
 
 ### 实时验证码
 
@@ -89,12 +102,13 @@ pnpm exec playwright test e2e/app.smoke.spec.ts --config=playwright.config.ts
 
 1. 点击右上角 **添加卡片**
 2. 输入 Base32 密钥
-3. 可选填写备注并选择颜色
-4. 保存后卡片会立即出现在列表中
+3. 可选填写备注
+4. 保存后卡片会立即出现在列表中，下一张新卡会自动轮换默认颜色
 
 ### 编辑与整理
 
 - 可分别修改备注与密钥
+- 删除前会显示二次确认，取消不会影响现有卡片
 - 拖动排序把手可调整卡片顺序
 - 拖动过程中列表会实时换位
 
