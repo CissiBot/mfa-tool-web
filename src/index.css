@@ -12,6 +12,11 @@ body,
   min-height: 100%;
 }
 
+#root {
+  position: relative;
+  isolation: isolate;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -23,78 +28,175 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background:
-    radial-gradient(circle at 15% 18%, var(--color-bg-aurora), transparent 28%),
-    radial-gradient(circle at 84% 10%, var(--color-bg-highlight), transparent 18%),
-    radial-gradient(circle at 82% 72%, var(--color-bg-orbit), transparent 24%),
-    radial-gradient(circle at 50% 110%, var(--color-bg-aurora-alt), transparent 30%),
-    linear-gradient(160deg, var(--color-bg-base) 0%, var(--color-bg-elevated) 28%, var(--color-bg-canvas) 58%, var(--color-bg-deep) 100%);
-  background-attachment: fixed;
+  background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
   overflow-x: hidden;
 }
 
-body::before {
+.app-background {
   content: '';
   position: fixed;
   inset: 0;
-  background-image:
-    radial-gradient(circle at 18px 22px, var(--color-bg-star) 0 1.2px, transparent 1.8px),
-    radial-gradient(circle at 62px 54px, var(--color-bg-star-soft) 0 1.4px, transparent 2px),
-    radial-gradient(circle at 132px 86px, rgba(255, 255, 255, 0.42) 0 1px, transparent 1.7px),
-    radial-gradient(circle at 80px 120px, rgba(255, 255, 255, 0.58) 0 1.2px, transparent 1.8px),
-    radial-gradient(circle at 24px 24px, rgba(255, 255, 255, 0.12) 0 1px, transparent 1.6px),
-    radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.08) 0 1px, transparent 1.5px);
-  background-size: 220px 220px, 320px 320px, 420px 420px, 560px 560px, 38px 38px, 56px 56px;
-  background-position: 0 0, 40px 10px, 18px -12px, 0 0, 0 0, 18px 12px;
-  mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.96), transparent 84%);
-  opacity: 0.68;
-  animation: starfield-drift 28s linear infinite alternate;
+  z-index: 0;
+  overflow: hidden;
+  background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
   pointer-events: none;
 }
 
-body::after {
+.app-background__stars {
   content: '';
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(circle at 20% 22%, rgba(255, 255, 255, 0.07), transparent 0 12%),
-    radial-gradient(circle at 72% 18%, rgba(255, 255, 255, 0.06), transparent 0 10%),
-    radial-gradient(circle at 60% 76%, rgba(255, 255, 255, 0.05), transparent 0 8%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 18%, transparent 78%, rgba(255, 255, 255, 0.02));
-  opacity: 0.74;
-  mix-blend-mode: screen;
-  animation: aurora-breathe 16s ease-in-out infinite alternate;
-  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: transparent;
+  border-radius: 50%;
+}
+
+.app-background__stars::after {
+  content: '';
+  position: absolute;
+  top: 2000px;
+  left: 0;
+  width: inherit;
+  height: inherit;
+  background: transparent;
+  box-shadow: inherit;
+}
+
+.app-background__stars--near {
+  width: 1px;
+  height: 1px;
+  box-shadow:
+    84px 120px #fff,
+    132px 421px #fff,
+    188px 32px #fff,
+    244px 510px #fff,
+    298px 188px #fff,
+    344px 700px #fff,
+    402px 116px #fff,
+    458px 612px #fff,
+    522px 302px #fff,
+    608px 44px #fff,
+    672px 498px #fff,
+    731px 213px #fff,
+    788px 830px #fff,
+    844px 160px #fff,
+    901px 560px #fff,
+    968px 94px #fff,
+    1022px 692px #fff,
+    1096px 356px #fff,
+    1154px 816px #fff,
+    1210px 126px #fff,
+    1284px 588px #fff,
+    1348px 268px #fff,
+    1412px 738px #fff,
+    1478px 420px #fff,
+    1540px 98px #fff,
+    1604px 640px #fff,
+    1668px 304px #fff,
+    1734px 856px #fff,
+    1798px 176px #fff,
+    1860px 520px #fff,
+    1918px 244px #fff,
+    1976px 708px #fff,
+    45px 880px #fff,
+    118px 1180px #fff,
+    176px 980px #fff,
+    236px 1328px #fff,
+    294px 1094px #fff,
+    366px 1488px #fff,
+    418px 1260px #fff,
+    486px 1668px #fff,
+    552px 1428px #fff,
+    612px 1882px #fff,
+    676px 1048px #fff,
+    744px 1540px #fff,
+    818px 1760px #fff,
+    892px 1204px #fff,
+    956px 1960px #fff,
+    1028px 1122px #fff,
+    1094px 1702px #fff,
+    1168px 1346px #fff,
+    1234px 1840px #fff,
+    1296px 1008px #fff,
+    1368px 1608px #fff,
+    1436px 1466px #fff,
+    1502px 1904px #fff,
+    1578px 1188px #fff,
+    1642px 1742px #fff,
+    1718px 1382px #fff,
+    1784px 1988px #fff,
+    1848px 1084px #fff,
+    1912px 1640px #fff,
+    1982px 1498px #fff;
+  animation: app-stars-rise 120s linear infinite;
+}
+
+.app-background__stars--mid {
+  width: 2px;
+  height: 2px;
+  opacity: 0.78;
+  box-shadow:
+    96px 248px rgba(255, 255, 255, 0.9),
+    244px 684px rgba(255, 255, 255, 0.92),
+    382px 146px rgba(255, 255, 255, 0.88),
+    528px 892px rgba(255, 255, 255, 0.9),
+    692px 374px rgba(255, 255, 255, 0.94),
+    844px 118px rgba(255, 255, 255, 0.86),
+    986px 648px rgba(255, 255, 255, 0.9),
+    1128px 284px rgba(255, 255, 255, 0.88),
+    1298px 954px rgba(255, 255, 255, 0.92),
+    1452px 438px rgba(255, 255, 255, 0.9),
+    1606px 156px rgba(255, 255, 255, 0.86),
+    1762px 774px rgba(255, 255, 255, 0.92),
+    1908px 332px rgba(255, 255, 255, 0.88),
+    120px 1426px rgba(255, 255, 255, 0.88),
+    286px 1702px rgba(255, 255, 255, 0.92),
+    458px 1228px rgba(255, 255, 255, 0.9),
+    624px 1884px rgba(255, 255, 255, 0.92),
+    804px 1096px rgba(255, 255, 255, 0.88),
+    972px 1588px rgba(255, 255, 255, 0.9),
+    1146px 1974px rgba(255, 255, 255, 0.92),
+    1324px 1284px rgba(255, 255, 255, 0.88),
+    1498px 1762px rgba(255, 255, 255, 0.9),
+    1674px 1186px rgba(255, 255, 255, 0.92),
+    1840px 1948px rgba(255, 255, 255, 0.9);
+  animation: app-stars-rise 180s linear infinite;
+}
+
+.app-background__stars--far {
+  width: 3px;
+  height: 3px;
+  opacity: 0.52;
+  box-shadow:
+    188px 92px rgba(255, 255, 255, 0.75),
+    486px 560px rgba(255, 255, 255, 0.72),
+    792px 214px rgba(255, 255, 255, 0.7),
+    1094px 884px rgba(255, 255, 255, 0.74),
+    1392px 428px rgba(255, 255, 255, 0.72),
+    1686px 126px rgba(255, 255, 255, 0.68),
+    1942px 702px rgba(255, 255, 255, 0.72),
+    264px 1462px rgba(255, 255, 255, 0.72),
+    628px 1844px rgba(255, 255, 255, 0.74),
+    1002px 1182px rgba(255, 255, 255, 0.7),
+    1368px 1658px rgba(255, 255, 255, 0.72),
+    1742px 1368px rgba(255, 255, 255, 0.74);
+  animation: app-stars-rise 260s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body::before,
-  body::after {
+  .app-background__stars,
+  .app-background__stars::after {
     animation: none;
   }
 }
 
-@keyframes starfield-drift {
+@keyframes app-stars-rise {
   from {
-    transform: translate3d(0, 0, 0) scale(1);
-    opacity: 0.62;
+    transform: translateY(0);
   }
 
   to {
-    transform: translate3d(0, -20px, 0) scale(1.03);
-    opacity: 0.8;
-  }
-}
-
-@keyframes aurora-breathe {
-  from {
-    transform: scale(1);
-    opacity: 0.62;
-  }
-
-  to {
-    transform: scale(1.04);
-    opacity: 0.82;
+    transform: translateY(-2000px);
   }
 }
 
