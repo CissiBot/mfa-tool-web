@@ -159,7 +159,10 @@ export function OtpCard({
             title="修改备注"
             onClick={onEditNote}
           >
-            <PenLine aria-hidden="true" size={15} strokeWidth={2} />
+            <span className="otp-card__action-label">备注</span>
+            <span className="otp-card__action-icon" aria-hidden="true">
+              <PenLine size={15} strokeWidth={2} />
+            </span>
           </button>
 
           <button
@@ -170,7 +173,10 @@ export function OtpCard({
             title="修改密钥"
             onClick={onEditSecret}
           >
-            <KeyRound aria-hidden="true" size={15} strokeWidth={2} />
+            <span className="otp-card__action-label">密钥</span>
+            <span className="otp-card__action-icon" aria-hidden="true">
+              <KeyRound size={15} strokeWidth={2} />
+            </span>
           </button>
 
           <button
@@ -184,7 +190,10 @@ export function OtpCard({
               void handleCopy()
             }}
           >
-            <Copy aria-hidden="true" size={15} strokeWidth={2} />
+            <span className="otp-card__action-label">{copyButtonLabel}</span>
+            <span className="otp-card__action-icon" aria-hidden="true">
+              <Copy size={15} strokeWidth={2} />
+            </span>
           </button>
         </div>
       </div>

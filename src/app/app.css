@@ -926,7 +926,7 @@
 
 .card-list__table-head {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 188px 192px;
+  grid-template-columns: minmax(0, 1fr) 144px 352px;
   gap: var(--space-3);
   padding: 0 16px 4px;
   color: var(--color-text-muted);
@@ -978,50 +978,35 @@
 
 .otp-card {
   position: relative;
-  overflow: hidden;
-  isolation: isolate;
+  overflow: visible;
   display: grid;
   gap: 10px;
   min-height: 0;
   padding: 14px 16px 12px;
-  border: 1px solid color-mix(in srgb, var(--card-accent) 26%, var(--color-border));
+  border: 1px solid color-mix(in srgb, var(--card-accent) 18%, var(--color-border-strong));
   border-radius: var(--radius-md);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0)),
-    color-mix(in srgb, var(--card-surface) 40%, var(--color-panel-strong));
+  background: color-mix(in srgb, var(--card-surface) 72%, var(--color-panel-strong));
   transition:
     box-shadow var(--duration-base) var(--ease-standard),
     border-color var(--duration-base) var(--ease-standard),
     transform var(--duration-base) var(--ease-standard),
     opacity var(--duration-base) var(--ease-standard),
     filter var(--duration-base) var(--ease-standard);
-  box-shadow: var(--shadow-elevated-glow);
+  box-shadow: 0 10px 24px rgba(2, 8, 24, 0.16);
 }
 
 .otp-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--card-accent) 18%, transparent), transparent 34%, rgba(255, 255, 255, 0.05) 70%, transparent);
-  opacity: 0.95;
-  pointer-events: none;
+  content: none;
 }
 
 .otp-card::after {
-  content: '';
-  position: absolute;
-  inset: auto -20% -55% 35%;
-  height: 120px;
-  background: radial-gradient(circle, color-mix(in srgb, var(--card-accent) 38%, transparent), transparent 66%);
-  opacity: 0.34;
-  filter: blur(20px);
-  pointer-events: none;
+  content: none;
 }
 
 .otp-card:hover {
   transform: translateY(-2px);
   border-color: color-mix(in srgb, var(--card-accent) 40%, var(--color-border-strong));
-  box-shadow: 0 28px 86px rgba(2, 8, 24, 0.5);
+  box-shadow: 0 14px 30px rgba(2, 8, 24, 0.2);
 }
 
 .otp-card[data-dragging='true'] {
@@ -1036,7 +1021,7 @@
 
 .otp-card[data-drop-target='true'] {
   border-color: color-mix(in srgb, var(--card-accent) 34%, var(--color-border-strong));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--card-accent) 36%, transparent), 0 20px 54px rgba(2, 8, 24, 0.32);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--card-accent) 36%, transparent), 0 12px 26px rgba(2, 8, 24, 0.18);
 }
 
 .card-list[data-drag-active='true'] .otp-card:not([data-dragging='true']) {
@@ -1092,7 +1077,7 @@
 
 .otp-card__row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 188px 192px;
+  grid-template-columns: minmax(0, 1fr) 144px 352px;
   gap: var(--space-4);
   align-items: center;
 }
@@ -1149,17 +1134,18 @@
   line-height: 1;
   letter-spacing: 0.12em;
   text-align: right;
-  text-shadow: 0 0 24px color-mix(in srgb, var(--card-accent) 28%, transparent);
+  text-shadow: none;
 }
 
 .otp-card__cell--code {
   justify-items: end;
   align-content: center;
+  padding-inline-end: var(--space-2);
 }
 
 .otp-card__actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
   justify-content: flex-end;
   min-width: 0;
@@ -1174,15 +1160,12 @@
   min-width: 40px;
   min-height: 40px;
   flex-shrink: 0;
-  border: 1px solid color-mix(in srgb, var(--card-accent) 42%, rgba(255, 255, 255, 0.06));
+  border: 1px solid color-mix(in srgb, var(--card-accent) 36%, rgba(255, 255, 255, 0.06));
   border-radius: var(--radius-pill);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02)),
-    color-mix(in srgb, var(--card-accent) 12%, var(--color-panel-strong));
-  color: color-mix(in srgb, var(--color-text-primary) 88%, var(--card-accent));
+  background: color-mix(in srgb, var(--card-accent) 14%, var(--color-panel-strong));
+  color: color-mix(in srgb, var(--color-text-primary) 92%, var(--card-accent));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    3px 3px 0 rgba(17, 24, 39, 0.44);
+    3px 3px 0 color-mix(in srgb, var(--card-accent) 30%, rgba(17, 24, 39, 0.58));
   cursor: grab;
   transition:
     transform var(--duration-fast) var(--ease-standard),
@@ -1196,10 +1179,7 @@
   transform: translate(-2px, -2px) scale(1.04);
   border-color: color-mix(in srgb, var(--card-accent) 50%, var(--color-border-strong));
   color: var(--color-text-primary);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    5px 5px 0 rgba(17, 24, 39, 0.52),
-    0 18px 40px rgba(2, 8, 24, 0.22);
+  box-shadow: 5px 5px 0 color-mix(in srgb, var(--card-accent) 34%, rgba(17, 24, 39, 0.64));
 }
 
 .otp-card__drag-handle:active {
@@ -1212,19 +1192,17 @@
   overflow: hidden;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 40px;
-  min-width: 40px;
+  width: 92px;
   flex-shrink: 0;
-  padding: 0 var(--space-3);
-  border: 1px solid color-mix(in srgb, var(--card-accent) 34%, rgba(255, 255, 255, 0.05));
-  border-radius: var(--radius-pill);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.01)),
-    color-mix(in srgb, var(--color-panel-strong) 96%, transparent);
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--card-accent) 22%, rgba(255, 255, 255, 0.04));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--card-accent) 88%, rgba(20, 27, 48, 0.94));
   color: var(--color-text-primary);
   font-weight: 700;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 14px 32px rgba(2, 8, 24, 0.22);
+  box-shadow: 4px 4px 0 color-mix(in srgb, var(--card-accent) 62%, rgba(17, 24, 39, 0.74));
   transition:
     transform var(--duration-fast) var(--ease-standard),
     border-color var(--duration-fast) var(--ease-standard),
@@ -1233,24 +1211,59 @@
     color var(--duration-fast) var(--ease-standard);
 }
 
+.otp-card__action-label,
+.otp-card__action-icon {
+  position: relative;
+  z-index: 1;
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    opacity var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.otp-card__action-label {
+  font-size: 0.82rem;
+  letter-spacing: 0.01em;
+}
+
+.otp-card__action-icon {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-50%);
+}
+
 .otp-card__action-button:hover {
-  transform: translate(-2px, -2px) scale(1.06);
-  border-color: color-mix(in srgb, var(--card-accent) 54%, rgba(255, 255, 255, 0.08));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    4px 4px 0 rgba(17, 24, 39, 0.48),
-    0 20px 42px rgba(2, 8, 24, 0.3);
+  transform: translate(-3px, -3px);
+  border-color: color-mix(in srgb, var(--card-accent) 34%, rgba(255, 255, 255, 0.06));
+  box-shadow: 6px 6px 0 color-mix(in srgb, var(--card-accent) 68%, rgba(17, 24, 39, 0.76));
+}
+
+.otp-card__action-button:hover .otp-card__action-label {
+  transform: translateX(-6px);
+  opacity: 0;
+}
+
+.otp-card__action-button:hover .otp-card__action-icon {
+  transform: translate(-26px, -50%);
+}
+
+.otp-card__action-button:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 color-mix(in srgb, var(--card-accent) 58%, rgba(17, 24, 39, 0.72));
 }
 
 .otp-card__action-button:disabled {
   opacity: 0.58;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .otp-card__action-button--copy {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
-    color-mix(in srgb, var(--card-accent) 18%, var(--color-panel-strong));
+  background: color-mix(in srgb, var(--card-accent) 96%, rgba(14, 20, 38, 0.96));
 }
 
 .otp-card__progress-track {
@@ -1576,8 +1589,8 @@
   }
 
   .otp-card {
-    background: linear-gradient(180deg, var(--card-surface), var(--color-panel-strong));
-    box-shadow: var(--shadow-panel);
+    background: color-mix(in srgb, var(--card-surface) 72%, var(--color-panel-strong));
+    box-shadow: 0 10px 24px rgba(2, 8, 24, 0.16);
   }
 
   .otp-card__meta-label {
