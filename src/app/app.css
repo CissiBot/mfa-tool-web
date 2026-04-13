@@ -123,7 +123,8 @@
 .app-toolbar__add::after,
 .app-toolbar__io .io-actions button::after,
 .workspace-panel__close::after,
-.otp-card__action-button::after {
+.otp-card__action-button::after,
+.otp-card__drag-handle::after {
   content: '';
   position: absolute;
   inset: auto auto 50% 50%;
@@ -140,35 +141,37 @@
 }
 
 .app-toolbar__add:hover {
-  transform: translate(-2px, -2px);
+  transform: translate(-4px, -4px) rotate(-0.5deg);
   border-color: color-mix(in srgb, var(--color-accent-violet) 90%, rgba(255, 255, 255, 0.08));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    7px 7px 0 color-mix(in srgb, var(--color-accent-violet) 60%, rgba(3, 7, 18, 0.84)),
-    0 20px 42px rgba(16, 24, 40, 0.34);
+    10px 10px 0 color-mix(in srgb, var(--color-accent-violet) 60%, rgba(3, 7, 18, 0.84)),
+    0 24px 48px rgba(16, 24, 40, 0.36);
 }
 
 .app-toolbar__add:hover svg,
 .app-toolbar__io .io-actions button:hover svg {
-  transform: translateX(2px);
+  transform: translateX(7px) scale(1.08);
 }
 
 .app-toolbar__add:hover span,
 .app-toolbar__io .io-actions button:hover span {
-  transform: translateX(-2px);
+  transform: translateX(-8px);
+  opacity: 0.82;
 }
 
 .app-toolbar__add:hover::after,
 .app-toolbar__io .io-actions button:hover::after,
 .workspace-panel__close:hover::after,
-.otp-card__action-button:hover::after {
-  transform: translate(-50%, -50%) scale(14);
-  opacity: 0.12;
+.otp-card__action-button:hover::after,
+.otp-card__drag-handle:hover::after {
+  transform: translate(-50%, -50%) scale(18);
+  opacity: 0.16;
 }
 
 .app-toolbar__add:active,
 .app-toolbar__io .io-actions button:active {
-  transform: translate(3px, 3px);
+  transform: translate(4px, 4px);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
     2px 2px 0 color-mix(in srgb, var(--color-accent-violet) 50%, rgba(3, 7, 18, 0.72)),
@@ -433,6 +436,12 @@
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02)),
     linear-gradient(180deg, rgba(5, 8, 20, 0.96), rgba(9, 16, 31, 0.92));
+  transform: translateY(-1px);
+}
+
+.field-block:hover::after {
+  transform: scaleX(0.74);
+  opacity: 0.58;
 }
 
 .field-block input:focus-visible,
@@ -448,12 +457,12 @@
 }
 
 .field-block input:focus-visible {
-  transform: translateY(-1px);
+  transform: translateY(-2px) scale(1.004);
   border-color: color-mix(in srgb, var(--color-accent-violet) 64%, var(--color-accent-cyan));
   box-shadow:
     0 0 0 1px rgba(139, 92, 246, 0.44),
     0 0 0 4px rgba(100, 216, 245, 0.1),
-    0 18px 40px rgba(35, 73, 170, 0.22);
+    0 24px 52px rgba(35, 73, 170, 0.28);
 }
 
 .field-block:focus-within::after {
@@ -462,8 +471,8 @@
 }
 
 .field-block:focus-within input::placeholder {
-  opacity: 0.35;
-  transform: translateX(4px);
+  opacity: 0.16;
+  transform: translateX(8px);
 }
 
 .color-fieldset {
@@ -652,12 +661,12 @@
 }
 
 .app-toolbar__io .io-actions button:hover {
-  transform: translate(-2px, -2px);
+  transform: translate(-4px, -4px);
   border-color: color-mix(in srgb, var(--color-accent-cyan) 44%, var(--color-accent-violet));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    6px 6px 0 rgba(17, 24, 39, 0.68),
-    0 18px 42px rgba(2, 8, 24, 0.32);
+    9px 9px 0 rgba(17, 24, 39, 0.68),
+    0 20px 44px rgba(2, 8, 24, 0.34);
 }
 
 .app-toolbar__io .io-actions button:disabled,
@@ -900,9 +909,11 @@
 }
 
 .app-shell[data-drag-active='true'] .app-toolbar {
-  opacity: 0.48;
-  transform: scale(0.96) translateY(4px);
+  opacity: 0.32;
+  filter: blur(6px) saturate(0.72);
+  transform: scale(0.93) translateY(8px);
   transition:
+    filter var(--duration-base) var(--ease-standard),
     opacity var(--duration-base) var(--ease-standard),
     transform var(--duration-base) var(--ease-standard);
 }
@@ -1015,11 +1026,11 @@
 
 .otp-card[data-dragging='true'] {
   opacity: 1;
-  transform: scale(1.08) translateY(-8px);
+  transform: scale(1.12) translateY(-10px) rotate(-1deg);
   border-color: var(--color-accent-cyan);
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--color-accent-cyan) 42%, transparent),
-    0 34px 110px rgba(33, 87, 167, 0.5);
+    0 40px 124px rgba(33, 87, 167, 0.56);
   z-index: 4;
 }
 
@@ -1029,15 +1040,15 @@
 }
 
 .card-list[data-drag-active='true'] .otp-card:not([data-dragging='true']) {
-  opacity: 0.54;
-  transform: scale(0.94);
-  filter: saturate(0.76);
+  opacity: 0.36;
+  transform: scale(0.9) translateY(8px);
+  filter: blur(6px) saturate(0.72);
 }
 
 .card-list[data-drag-active='true'] .otp-card[data-drop-target='true'] {
-  opacity: 0.88;
-  transform: scale(0.98);
-  filter: saturate(1.06);
+  opacity: 0.76;
+  transform: scale(0.95) translateY(2px);
+  filter: blur(1.5px) saturate(1.04);
 }
 
 .otp-card[data-color='slate'] {
@@ -1182,13 +1193,18 @@
 }
 
 .otp-card__drag-handle:hover {
-  transform: translate(-1px, -1px);
+  transform: translate(-2px, -2px) scale(1.04);
   border-color: color-mix(in srgb, var(--card-accent) 50%, var(--color-border-strong));
   color: var(--color-text-primary);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    5px 5px 0 rgba(17, 24, 39, 0.52),
+    0 18px 40px rgba(2, 8, 24, 0.22);
 }
 
 .otp-card__drag-handle:active {
   cursor: grabbing;
+  transform: translate(2px, 2px);
 }
 
 .otp-card__action-button {
@@ -1218,9 +1234,12 @@
 }
 
 .otp-card__action-button:hover {
-  transform: translateY(-2px) scale(1.04);
+  transform: translate(-2px, -2px) scale(1.06);
   border-color: color-mix(in srgb, var(--card-accent) 54%, rgba(255, 255, 255, 0.08));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 18px 40px rgba(2, 8, 24, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    4px 4px 0 rgba(17, 24, 39, 0.48),
+    0 20px 42px rgba(2, 8, 24, 0.3);
 }
 
 .otp-card__action-button:disabled {
@@ -1320,9 +1339,12 @@
 }
 
 .workspace-panel__close:hover {
-  transform: translateY(-2px) scale(1.03);
+  transform: translate(-2px, -2px) scale(1.06);
   border-color: color-mix(in srgb, var(--color-accent-cyan) 35%, var(--color-border-strong));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 18px 40px rgba(2, 8, 24, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    4px 4px 0 rgba(17, 24, 39, 0.48),
+    0 20px 42px rgba(2, 8, 24, 0.3);
 }
 
 .workspace-panel .composer-form {
@@ -1489,6 +1511,13 @@
   .confirm-dialog__actions button {
     animation: none;
     transition-duration: 1ms;
+  }
+
+  .app-shell[data-drag-active='true'] .app-toolbar,
+  .card-list[data-drag-active='true'] .otp-card:not([data-dragging='true']),
+  .card-list[data-drag-active='true'] .otp-card[data-drop-target='true'] {
+    filter: none;
+    transform: none;
   }
 }
 
