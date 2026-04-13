@@ -71,9 +71,10 @@ describe('OtpCard', () => {
     expect(screen.getByTestId('copy-status')).toHaveTextContent('验证码已复制')
   })
 
-  it('点击编辑按钮会触发对应回调', () => {
+  it('点击编辑和删除按钮会触发对应回调', () => {
     const onEditNote = vi.fn()
     const onEditSecret = vi.fn()
+    const onRequestRemove = vi.fn()
 
     render(
       <OtpCard
@@ -81,14 +82,17 @@ describe('OtpCard', () => {
         timeWindow={getTotpTimeWindow(Date.parse('2026-04-12T12:00:19.000Z'))}
         onEditNote={onEditNote}
         onEditSecret={onEditSecret}
+        onRequestRemove={onRequestRemove}
       />,
     )
 
     fireEvent.click(screen.getByRole('button', { name: '修改备注：GitHub' }))
     fireEvent.click(screen.getByRole('button', { name: '修改密钥：GitHub' }))
+    fireEvent.click(screen.getByRole('button', { name: '删除卡片：GitHub' }))
 
     expect(onEditNote).toHaveBeenCalledTimes(1)
     expect(onEditSecret).toHaveBeenCalledTimes(1)
+    expect(onRequestRemove).toHaveBeenCalledTimes(1)
   })
 
   it('备注为空时显示稳定占位，不影响标题区域', () => {
@@ -114,7 +118,7 @@ describe('OtpCard', () => {
     expect(screen.getByTestId('copy-code-button')).toBeInTheDocument()
     expect(screen.getByTestId('otp-progress')).toBeInTheDocument()
     expect(screen.queryByTestId('toggle-secret-button')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('delete-card-button')).not.toBeInTheDocument()
+    expect(screen.getByTestId('delete-card-button')).toBeInTheDocument()
     expect(screen.queryByTestId('otp-countdown')).not.toBeInTheDocument()
   })
 })

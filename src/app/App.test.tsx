@@ -25,7 +25,7 @@ describe('App', () => {
     expect(screen.getByTestId('workspace-overlay')).toBeInTheDocument()
     expect(screen.getByTestId('secret-input')).toBeInTheDocument()
     expect(screen.getByTestId('note-input')).toBeInTheDocument()
-    expect(screen.getByTestId('color-option-blue')).toBeInTheDocument()
+    expect(screen.queryByTestId('color-option-blue')).not.toBeInTheDocument()
     expect(screen.getByTestId('import-button')).toBeInTheDocument()
     expect(screen.getByTestId('import-file-input')).toBeInTheDocument()
     expect(screen.getByTestId('export-button')).toBeDisabled()
@@ -82,7 +82,6 @@ describe('App', () => {
     fireEvent.click(screen.getByTestId('open-composer-button'))
     fireEvent.change(screen.getByTestId('secret-input'), { target: { value: 'GEZD GNBV GY3T QOJQ' } })
     fireEvent.change(screen.getByTestId('note-input'), { target: { value: 'AWS' } })
-    fireEvent.click(screen.getByTestId('color-option-rose'))
     fireEvent.click(screen.getByTestId('save-card-button'))
 
     expect(screen.getByText('AWS')).toBeInTheDocument()
@@ -168,6 +167,60 @@ describe('App', () => {
       expect(screen.getByText('GEZD GNBV GY3T QOJQ')).toBeInTheDocument()
       expect(screen.getByTestId('otp-code')).toHaveTextContent(expectedCode)
     })
+  })
+
+  it('删除卡片前需要确认，取消后卡片保持不变', async () => {
+    const storage = createMemoryStorage()
+    const repository = createCardRepository({ storage })
+    repository.save({
+      id: 'card-github',
+      rawSecret: 'JBSW Y3DP EH PK3PXP',
+      normalizedSecret: 'JBSWY3DPEHPK3PXP',
+      note: 'GitHub',
+      color: 'blue',
+      createdAt: '2026-04-12T00:00:00.000Z',
+      updatedAt: '2026-04-12T00:00:00.000Z',
+    })
+
+    const cardStore = createCardCollectionStore({ repository, targetWindow: undefined })
+
+    render(<App cardStore={cardStore} cardRepository={repository} timeStore={createMockTimeStore()} />)
+
+    fireEvent.click(screen.getByTestId('delete-card-button'))
+
+    expect(screen.getByTestId('confirm-dialog')).toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('cancel-confirm-button'))
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('confirm-dialog')).not.toBeInTheDocument()
+    })
+    expect(screen.getByText('GitHub')).toBeInTheDocument()
+  })
+
+  it('确认删除后会移除卡片并在删掉最后一张时回到空状态', async () => {
+    const storage = createMemoryStorage()
+    const repository = createCardRepository({ storage })
+    repository.save({
+      id: 'card-github',
+      rawSecret: 'JBSW Y3DP EH PK3PXP',
+      normalizedSecret: 'JBSWY3DPEHPK3PXP',
+      note: 'GitHub',
+      color: 'blue',
+      createdAt: '2026-04-12T00:00:00.000Z',
+      updatedAt: '2026-04-12T00:00:00.000Z',
+    })
+
+    const cardStore = createCardCollectionStore({ repository, targetWindow: undefined })
+
+    render(<App cardStore={cardStore} cardRepository={repository} timeStore={createMockTimeStore()} />)
+
+    fireEvent.click(screen.getByTestId('delete-card-button'))
+    fireEvent.click(screen.getByTestId('confirm-delete-card-button'))
+
+    await waitFor(() => {
+      expect(screen.queryByText('GitHub')).not.toBeInTheDocument()
+    })
+    expect(screen.getByTestId('empty-state')).toBeInTheDocument()
   })
 
   it('拖动卡片后会更新列表顺序并持久化', async () => {

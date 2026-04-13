@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+
 import { CardPreview } from '../features/cards'
 import type { CardRecord, StorageError } from '../lib/storage'
 import type { CardRepository } from '../lib/storage/repository'
@@ -18,6 +20,66 @@ interface AppCardListSectionProps {
   onDragStart: (cardId: string) => void
   onDropReorder: (targetCardId: string) => void
   onOpenEditWorkspace: (card: CardRecord, focusField: WorkspaceFocusField) => void
+  onRequestRemove: (card: CardRecord) => void
+}
+
+function hashCardId(cardId: string): number {
+  let hash = 0
+
+  for (const character of cardId) {
+    hash = (hash * 31 + character.charCodeAt(0)) >>> 0
+  }
+
+  return hash
+}
+
+function hslToHex(hue: number, saturation: number, lightness: number): string {
+  const normalizedHue = ((hue % 360) + 360) % 360
+  const normalizedSaturation = saturation / 100
+  const normalizedLightness = lightness / 100
+  const chroma = (1 - Math.abs(2 * normalizedLightness - 1)) * normalizedSaturation
+  const hueSegment = normalizedHue / 60
+  const secondary = chroma * (1 - Math.abs((hueSegment % 2) - 1))
+
+  let red = 0
+  let green = 0
+  let blue = 0
+
+  if (hueSegment >= 0 && hueSegment < 1) {
+    red = chroma
+    green = secondary
+  } else if (hueSegment < 2) {
+    red = secondary
+    green = chroma
+  } else if (hueSegment < 3) {
+    green = chroma
+    blue = secondary
+  } else if (hueSegment < 4) {
+    green = secondary
+    blue = chroma
+  } else if (hueSegment < 5) {
+    red = secondary
+    blue = chroma
+  } else {
+    red = chroma
+    blue = secondary
+  }
+
+  const lightnessMatch = normalizedLightness - chroma / 2
+  const toHex = (channel: number) =>
+    Math.round((channel + lightnessMatch) * 255)
+      .toString(16)
+      .padStart(2, '0')
+
+  return `#${toHex(red)}${toHex(green)}${toHex(blue)}`
+}
+
+function createFrameAccent(cardId: string, attempt: number): string {
+  const baseHue = hashCardId(cardId) % 360
+  const hue = (baseHue + attempt * 47) % 360
+  const lightness = 72 - ((attempt % 3) * 4)
+
+  return hslToHex(hue, 82, lightness)
 }
 
 export function AppCardListSection({
@@ -34,7 +96,28 @@ export function AppCardListSection({
   onDragStart,
   onDropReorder,
   onOpenEditWorkspace,
+  onRequestRemove,
 }: AppCardListSectionProps) {
+  const frameAccentByCardId = useMemo(() => {
+    const usedAccents = new Set<string>()
+    const accentMap = new Map<string, string>()
+
+    orderedCards.forEach((card) => {
+      let attempt = 0
+      let candidate = createFrameAccent(card.id, attempt)
+
+      while (usedAccents.has(candidate)) {
+        attempt += 1
+        candidate = createFrameAccent(card.id, attempt)
+      }
+
+      accentMap.set(card.id, candidate)
+      usedAccents.add(candidate)
+    })
+
+    return accentMap
+  }, [orderedCards])
+
   return (
     <div
       className="card-list"
@@ -62,6 +145,7 @@ export function AppCardListSection({
             <CardPreview
               key={card.id}
               card={card}
+              frameAccent={frameAccentByCardId.get(card.id)}
               repository={repository}
               timeWindow={timeWindow}
               draggable
@@ -82,6 +166,9 @@ export function AppCardListSection({
               }}
               onEditSecret={() => {
                 onOpenEditWorkspace(card, 'secret')
+              }}
+              onRequestRemove={() => {
+                onRequestRemove(card)
               }}
             />
           ))}

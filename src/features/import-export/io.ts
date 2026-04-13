@@ -1,6 +1,9 @@
 import {
+  CARD_COLORS,
   decodeExportPayload,
   parseStorageJson,
+  type CardColor,
+  type CardRecord,
   type ExportPayloadV1,
   type StorageError,
   type StorageResult,
@@ -97,7 +100,15 @@ export function importCardsFromJson(json: string, repository: CardRepository): I
     }
   }
 
-  const mergeResult = repository.merge(validCards)
+  const loadedResult = repository.load()
+
+  if (!loadedResult.ok) {
+    return loadedResult
+  }
+
+  const recoloredCards = assignSequentialColors(validCards, loadedResult.value)
+
+  const mergeResult = repository.merge(recoloredCards)
 
   if (!mergeResult.ok) {
     return mergeResult
@@ -112,6 +123,38 @@ export function importCardsFromJson(json: string, repository: CardRepository): I
       failedReasons,
     },
   }
+}
+
+function assignSequentialColors(cards: ExportPayloadV1['cards'], existingCards: readonly CardRecord[]): ExportPayloadV1['cards'] {
+  const assignedCards = [...existingCards]
+
+  return cards.map((card) => {
+    const nextColor = getNextSequentialColor(assignedCards)
+    const nextCard = {
+      ...card,
+      color: nextColor,
+    }
+
+    assignedCards.push(nextCard)
+
+    return nextCard
+  })
+}
+
+function getNextSequentialColor(cards: readonly Pick<CardRecord, 'color'>[]): CardColor {
+  const lastColor = cards.at(-1)?.color
+
+  if (!lastColor) {
+    return CARD_COLORS[0]
+  }
+
+  const lastColorIndex = CARD_COLORS.indexOf(lastColor)
+
+  if (lastColorIndex === -1) {
+    return CARD_COLORS[0]
+  }
+
+  return CARD_COLORS[(lastColorIndex + 1) % CARD_COLORS.length]
 }
 
 function decodeImportEnvelope(input: unknown): StorageResult<ImportEnvelope> {

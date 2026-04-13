@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
-import { Copy, GripVertical, KeyRound, PenLine } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { Copy, GripVertical, KeyRound, PenLine, Trash2 } from 'lucide-react'
 
 import type { CardRecord } from '../../lib/storage'
 import type { CardRepository } from '../../lib/storage/repository'
@@ -10,8 +10,9 @@ import { getCardNoteLabel } from './display'
 export interface OtpCardProps {
   card: CardRecord
   timeWindow: TotpTimeWindow
+  frameAccent?: string
   repository?: CardRepository
-  onRemoved?: () => void
+  onRequestRemove?: () => void
   copyCode?: (code: string) => Promise<void>
   onEditNote?: () => void
   onEditSecret?: () => void
@@ -29,8 +30,9 @@ const OTP_CODE_PLACEHOLDER = '------'
 export function OtpCard({
   card,
   timeWindow,
+  frameAccent,
   repository = appCardRepository,
-  onRemoved,
+  onRequestRemove,
   copyCode = copyOtpCode,
   onEditNote,
   onEditSecret,
@@ -43,21 +45,58 @@ export function OtpCard({
   onDragEnd,
 }: OtpCardProps) {
   void repository
-  void onRemoved
   const [otpCode, setOtpCode] = useState(OTP_CODE_PLACEHOLDER)
   const [copyState, setCopyState] = useState<{ status: 'idle' | 'success' | 'error'; value: string | null }>({
     status: 'idle',
     value: null,
   })
+  const progressBarRef = useRef<HTMLSpanElement | null>(null)
   const progressRatio = timeWindow.elapsedSeconds / timeWindow.periodSeconds
+  const progressDurationMs = timeWindow.periodSeconds * 1000
   const progressStyle = useMemo(
     () =>
       ({
+        '--card-frame-accent': frameAccent ?? 'var(--card-accent)',
         '--otp-progress-ratio': String(progressRatio),
       }) as CSSProperties,
-    [progressRatio],
+    [frameAccent, progressRatio],
   )
   const noteLabel = getCardNoteLabel(card.note)
+
+  useEffect(() => {
+    const progressBar = progressBarRef.current
+
+    if (!progressBar) {
+      return
+    }
+
+    const updateProgressRatio = () => {
+      const elapsedMs = ((Date.now() - timeWindow.startedAt) % progressDurationMs + progressDurationMs) % progressDurationMs
+      progressBar.style.setProperty('--otp-progress-ratio-live', String(elapsedMs / progressDurationMs))
+    }
+
+    updateProgressRatio()
+
+    if (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return () => {
+        progressBar.style.removeProperty('--otp-progress-ratio-live')
+      }
+    }
+
+    let frameId = 0
+
+    const animate = () => {
+      updateProgressRatio()
+      frameId = window.requestAnimationFrame(animate)
+    }
+
+    frameId = window.requestAnimationFrame(animate)
+
+    return () => {
+      window.cancelAnimationFrame(frameId)
+      progressBar.style.removeProperty('--otp-progress-ratio-live')
+    }
+  }, [progressDurationMs, timeWindow.counter, timeWindow.startedAt])
 
   useEffect(() => {
     let cancelled = false
@@ -108,6 +147,7 @@ export function OtpCard({
       data-dragging={isDragging ? 'true' : 'false'}
       data-drop-target={isDropTarget ? 'true' : 'false'}
       data-testid={`card-${card.id}`}
+      style={progressStyle}
       onDragOver={(event) => {
         event.preventDefault()
         onDragOver?.()
@@ -202,6 +242,19 @@ export function OtpCard({
               <Copy size={15} strokeWidth={2} />
             </span>
           </button>
+
+          <button
+            className="otp-card__action-button otp-card__action-button--danger otp-card__action-button--icon-only"
+            data-testid="delete-card-button"
+            type="button"
+            aria-label={`删除卡片：${noteLabel}`}
+            title="删除卡片"
+            onClick={onRequestRemove}
+          >
+            <span className="otp-card__action-icon" aria-hidden="true">
+              <Trash2 size={15} strokeWidth={2} />
+            </span>
+          </button>
         </div>
       </div>
 
@@ -214,7 +267,7 @@ export function OtpCard({
         aria-valuenow={timeWindow.elapsedSeconds}
         data-testid="otp-progress"
       >
-        <span className="otp-card__progress-bar" style={progressStyle} />
+        <span ref={progressBarRef} className="otp-card__progress-bar" />
       </div>
 
       <span aria-live="polite" className="sr-only" data-testid="copy-status">

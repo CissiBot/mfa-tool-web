@@ -2,18 +2,18 @@ import { fireEvent, render, screen } from '@testing-library/react'
 
 import { createCardRepository, STORAGE_KEY, type CardRecord, type StorageLike } from '../../lib/storage'
 import { CardComposer } from './CardComposer'
-import { DEFAULT_CARD_COLOR } from './defaults'
 
 describe('CardComposer', () => {
-  it('成功保存时默认使用蓝色并清空表单', () => {
+  it('首次创建默认使用蓝色，连续创建时会自动轮换到下一色', () => {
     const storage = createMemoryStorage()
     const onSaved = vi.fn()
+    const createId = vi.fn().mockReturnValueOnce('card-blue').mockReturnValueOnce('card-green')
 
     render(
       <CardComposer
         repository={createTestRepository(storage)}
         onSaved={onSaved}
-        createId={() => 'card-blue'}
+        createId={createId}
         now={() => '2026-04-12T12:00:00.000Z'}
       />,
     )
@@ -25,10 +25,13 @@ describe('CardComposer', () => {
     fireEvent.change(noteInput, { target: { value: 'GitHub' } })
     fireEvent.click(screen.getByTestId('save-card-button'))
 
-    expect(onSaved).toHaveBeenCalledTimes(1)
+    fireEvent.change(secretInput, { target: { value: 'GEZD GNBV GY3T QOJQ' } })
+    fireEvent.change(noteInput, { target: { value: 'AWS' } })
+    fireEvent.click(screen.getByTestId('save-card-button'))
+
+    expect(onSaved).toHaveBeenCalledTimes(2)
     expect(secretInput).toHaveValue('')
     expect(noteInput).toHaveValue('')
-    expect(screen.getByTestId(`color-option-${DEFAULT_CARD_COLOR}`)).toHaveAttribute('data-active', 'true')
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(readStoredCards(storage)).toEqual([
       {
@@ -40,6 +43,49 @@ describe('CardComposer', () => {
         createdAt: '2026-04-12T12:00:00.000Z',
         updatedAt: '2026-04-12T12:00:00.000Z',
       },
+      {
+        id: 'card-green',
+        rawSecret: 'GEZD GNBV GY3T QOJQ',
+        normalizedSecret: 'GEZDGNBVGY3TQOJQ',
+        note: 'AWS',
+        color: 'green',
+        createdAt: '2026-04-12T12:00:00.000Z',
+        updatedAt: '2026-04-12T12:00:00.000Z',
+      },
+    ])
+  })
+
+  it('创建模式会根据现有最后一张卡片自动轮换默认颜色', () => {
+    const storage = createMemoryStorage({
+      [STORAGE_KEY]: JSON.stringify({
+        version: 1,
+        cards: [
+          createCard({ id: 'card-1', color: 'blue' }),
+          createCard({ id: 'card-2', color: 'green', normalizedSecret: 'GEZDGNBVGY3TQOJQ', rawSecret: 'GEZD GNBV GY3T QOJQ' }),
+        ],
+      }),
+    })
+
+    render(
+      <CardComposer
+        repository={createTestRepository(storage)}
+        createId={() => 'card-3'}
+        now={() => '2026-04-12T12:00:00.000Z'}
+      />,
+    )
+
+    fireEvent.change(screen.getByTestId('secret-input'), { target: { value: 'MFRG GZDF MZTW Q2LK' } })
+    fireEvent.change(screen.getByTestId('note-input'), { target: { value: 'Linear' } })
+    fireEvent.click(screen.getByTestId('save-card-button'))
+
+    expect(readStoredCards(storage)).toEqual([
+      createCard({ id: 'card-1', color: 'blue' }),
+      createCard({ id: 'card-2', color: 'green', normalizedSecret: 'GEZDGNBVGY3TQOJQ', rawSecret: 'GEZD GNBV GY3T QOJQ' }),
+      expect.objectContaining({
+        id: 'card-3',
+        note: 'Linear',
+        color: 'amber',
+      }),
     ])
   })
 

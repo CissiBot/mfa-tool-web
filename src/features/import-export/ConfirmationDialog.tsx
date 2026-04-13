@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useEffect, useId } from 'react'
 import { createPortal } from 'react-dom'
 
 export interface ConfirmationDialogProps {
@@ -25,6 +25,21 @@ export function ConfirmationDialog({
   const titleId = useId()
   const descriptionId = useId()
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onCancel()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [onCancel])
+
   const dialog = (
     <div className="confirm-overlay" data-testid="confirm-dialog-backdrop">
       <div
@@ -43,7 +58,7 @@ export function ConfirmationDialog({
 
         <div className="confirm-dialog__actions">
           <button data-testid="cancel-confirm-button" type="button" onClick={onCancel}>
-            {cancelLabel}
+            <span>{cancelLabel}</span>
           </button>
           <button
             className="confirm-dialog__confirm"
@@ -52,7 +67,7 @@ export function ConfirmationDialog({
             type="button"
             onClick={onConfirm}
           >
-            {confirmLabel}
+            <span>{confirmLabel}</span>
           </button>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ComponentProps } from 'react'
-import { X } from 'lucide-react'
+import { Plus } from 'lucide-react'
 
 import { CardComposer } from '../features/cards'
 import type { CardRecord } from '../lib/storage'
@@ -103,7 +103,9 @@ export function AppWorkspace({
             type="button"
             onClick={onClose}
           >
-            <X aria-hidden="true" size={16} strokeWidth={2.2} />
+            <span className="workspace-panel__close-glyph" aria-hidden="true">
+              <Plus size={18} strokeWidth={2} />
+            </span>
             <span className="sr-only">关闭工作区</span>
           </button>
         </div>

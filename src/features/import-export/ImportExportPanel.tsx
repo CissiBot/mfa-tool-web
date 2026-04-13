@@ -179,8 +179,18 @@ export function ImportExportPanel({
           type="button"
           onClick={() => fileInputRef.current?.click()}
         >
-          {ImportIcon ? <ImportIcon aria-hidden="true" size={16} strokeWidth={2.1} /> : null}
-          <span>导入 JSON</span>
+          <span className="app-toolbar__button-circle" aria-hidden="true" />
+          {ImportIcon ? (
+            <span className="app-toolbar__button-icon app-toolbar__button-icon--lead" aria-hidden="true">
+              <ImportIcon size={16} strokeWidth={2.1} />
+            </span>
+          ) : null}
+          <span className="app-toolbar__button-label">导入 JSON</span>
+          {ImportIcon ? (
+            <span className="app-toolbar__button-icon app-toolbar__button-icon--trail" aria-hidden="true">
+              <ImportIcon size={16} strokeWidth={2.1} />
+            </span>
+          ) : null}
         </button>
         <button
           className="io-actions__button io-actions__button--export"
@@ -191,8 +201,18 @@ export function ImportExportPanel({
             setConfirmAction('export')
           }}
         >
-          {ExportIcon ? <ExportIcon aria-hidden="true" size={16} strokeWidth={2.1} /> : null}
-          <span>导出 JSON</span>
+          <span className="app-toolbar__button-circle" aria-hidden="true" />
+          {ExportIcon ? (
+            <span className="app-toolbar__button-icon app-toolbar__button-icon--lead" aria-hidden="true">
+              <ExportIcon size={16} strokeWidth={2.1} />
+            </span>
+          ) : null}
+          <span className="app-toolbar__button-label">导出 JSON</span>
+          {ExportIcon ? (
+            <span className="app-toolbar__button-icon app-toolbar__button-icon--trail" aria-hidden="true">
+              <ExportIcon size={16} strokeWidth={2.1} />
+            </span>
+          ) : null}
         </button>
         {showClearButton ? (
           <button

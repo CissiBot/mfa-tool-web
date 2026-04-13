@@ -3,7 +3,7 @@ import { FileDown, FileUp, Plus } from 'lucide-react'
 
 import { appCardRepository } from '../features/cards'
 import type { CardRecord } from '../lib/storage'
-import { ImportExportPanel } from '../features/import-export'
+import { ConfirmationDialog, ImportExportPanel } from '../features/import-export'
 import type { CardRepository } from '../lib/storage/repository'
 import { getTotpTimeWindow } from '../lib/totp'
 import { AppCardListSection } from './AppCardListSection'
@@ -30,6 +30,7 @@ function App({
   const timeWindow = useMemo(() => getTotpTimeWindow(now), [now])
   const [workspaceState, setWorkspaceState] = useState<WorkspaceState | null>(null)
   const [workspaceReturnFocusTarget, setWorkspaceReturnFocusTarget] = useState<HTMLElement | null>(null)
+  const [cardPendingRemoval, setCardPendingRemoval] = useState<CardRecord | null>(null)
   const [draggedCardId, setDraggedCardId] = useState<string | null>(null)
   const [dropTargetCardId, setDropTargetCardId] = useState<string | null>(null)
   const [previewOrderIds, setPreviewOrderIds] = useState<string[] | null>(null)
@@ -106,8 +107,33 @@ function App({
     cardStore.refresh()
   }
 
+  const handleConfirmRemoveCard = useCallback(() => {
+    if (!cardPendingRemoval) {
+      return
+    }
+
+    const removeResult = cardRepository.remove(cardPendingRemoval.id)
+    setCardPendingRemoval(null)
+
+    if (!removeResult.ok) {
+      return
+    }
+
+    if (workspaceState?.mode === 'edit' && workspaceState.card.id === cardPendingRemoval.id) {
+      closeWorkspace()
+    }
+
+    cardStore.refresh()
+  }, [cardPendingRemoval, cardRepository, cardStore, closeWorkspace, workspaceState])
+
   return (
     <>
+      <div aria-hidden="true" className="app-background">
+        <div className="app-background__stars app-background__stars--near" />
+        <div className="app-background__stars app-background__stars--mid" />
+        <div className="app-background__stars app-background__stars--far" />
+      </div>
+
       <a className="skip-link" href="#main-content">
         跳到主要内容
       </a>
@@ -142,8 +168,14 @@ function App({
                 openCreateWorkspace('secret')
               }}
             >
-              <Plus aria-hidden="true" size={16} strokeWidth={2.2} />
-              <span>添加卡片</span>
+              <span className="app-toolbar__button-circle" aria-hidden="true" />
+              <span className="app-toolbar__button-icon app-toolbar__button-icon--lead" aria-hidden="true">
+                <Plus size={16} strokeWidth={2.2} />
+              </span>
+              <span className="app-toolbar__button-label">添加卡片</span>
+              <span className="app-toolbar__button-icon app-toolbar__button-icon--trail" aria-hidden="true">
+                <Plus size={16} strokeWidth={2.2} />
+              </span>
             </button>
           </div>
         </div>
@@ -162,6 +194,9 @@ function App({
           onDragStart={handleDragStart}
           onDropReorder={handleDropReorder}
           onOpenEditWorkspace={openEditWorkspace}
+          onRequestRemove={(card) => {
+            setCardPendingRemoval(card)
+          }}
         />
       </main>
 
@@ -175,6 +210,19 @@ function App({
             cardStore.refresh()
             closeWorkspace()
           }}
+        />
+      ) : null}
+
+      {cardPendingRemoval ? (
+        <ConfirmationDialog
+          confirmLabel="确认删除这张卡片"
+          confirmTestId="confirm-delete-card-button"
+          description={`将删除“${cardPendingRemoval.note || '未命名卡片'}”这张本地卡片，取消前数据不会变化。`}
+          title="确认删除这张卡片？"
+          onCancel={() => {
+            setCardPendingRemoval(null)
+          }}
+          onConfirm={handleConfirmRemoveCard}
         />
       ) : null}
     </>

@@ -1,10 +1,9 @@
 import { useState, type ComponentProps } from 'react'
 
-import { CARD_COLORS, type CardColor, type CardRecord } from '../../lib/storage'
+import type { CardColor, CardRecord } from '../../lib/storage'
 import type { CardRepository } from '../../lib/storage/repository'
 import { Base32SecretError, normalizeBase32Secret } from '../../lib/totp'
-import { COLOR_COPY } from './color-copy'
-import { appCardRepository, DEFAULT_CARD_COLOR } from './defaults'
+import { appCardRepository, DEFAULT_CARD_COLOR, getNextCardColor } from './defaults'
 
 export interface CardComposerProps {
   repository?: CardRepository
@@ -33,7 +32,7 @@ export function CardComposer({
 }: CardComposerProps) {
   const [secretDraft, setSecretDraft] = useState(card?.rawSecret ?? '')
   const [noteDraft, setNoteDraft] = useState(card?.note ?? '')
-  const [selectedColor, setSelectedColor] = useState<CardColor>(card?.color ?? DEFAULT_CARD_COLOR)
+  const [selectedColor, setSelectedColor] = useState<CardColor>(() => card?.color ?? resolveCreateModeColor(repository))
   const [feedback, setFeedback] = useState<string | null>(null)
   const isEditing = mode === 'edit' && Boolean(card)
 
@@ -73,7 +72,7 @@ export function CardComposer({
     if (!isEditing) {
       setSecretDraft('')
       setNoteDraft('')
-      setSelectedColor(DEFAULT_CARD_COLOR)
+      setSelectedColor(getNextCardColor(saveResult.value))
     }
 
     setFeedback(null)
@@ -120,45 +119,9 @@ export function CardComposer({
         />
       </label>
 
-      <fieldset className="color-fieldset">
-        <legend className="field-block__label">卡片颜色</legend>
-
-        <div className="color-options" role="radiogroup" aria-label="卡片颜色">
-          {CARD_COLORS.map((color) => {
-            const isActive = selectedColor === color
-
-            return (
-              <label
-                key={color}
-                className="color-option"
-                data-active={isActive}
-                data-color={color}
-                data-testid={`color-option-${color}`}
-              >
-                <input
-                  type="radio"
-                  name="color"
-                  value={color}
-                  checked={isActive}
-                  onChange={() => {
-                    setSelectedColor(color)
-                    setFeedback(null)
-                  }}
-                />
-                <span className="color-option__swatch" aria-hidden="true" />
-                <span className="color-option__copy">
-                  <strong>{COLOR_COPY[color].label}</strong>
-                  <small>{COLOR_COPY[color].hint}</small>
-                </span>
-              </label>
-            )
-          })}
-        </div>
-      </fieldset>
-
       <div className="composer-actions">
         <button data-testid="save-card-button" type="submit">
-          {isEditing ? '更新卡片' : '保存卡片'}
+          <span>{isEditing ? '更新卡片' : '保存卡片'}</span>
         </button>
         {!compact ? (
           <p>
@@ -183,6 +146,16 @@ function formatRepositoryError(error: { code: string; message: string }): string
   }
 
   return error.message
+}
+
+function resolveCreateModeColor(repository: CardRepository): CardColor {
+  const loadedResult = repository.load()
+
+  if (!loadedResult.ok) {
+    return DEFAULT_CARD_COLOR
+  }
+
+  return getNextCardColor(loadedResult.value)
 }
 
 function createCardId(): string {

@@ -31,6 +31,22 @@ describe('ImportExportPanel', () => {
     expect(screen.queryByTestId('confirm-dialog')).not.toBeInTheDocument()
   })
 
+  it('导出确认弹窗支持按 Escape 关闭', () => {
+    const repository = createCardRepository({ storage: createMemoryStorage() })
+    const card = createCard()
+
+    repository.save(card)
+
+    render(<ImportExportPanel cards={[card]} repository={repository} />)
+
+    fireEvent.click(screen.getByTestId('export-button'))
+    expect(screen.getByTestId('confirm-dialog')).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+
+    expect(screen.queryByTestId('confirm-dialog')).not.toBeInTheDocument()
+  })
+
   it('导入混合文件时会区分新增、跳过重复和失败原因', async () => {
     const storage = createMemoryStorage()
     const repository = createCardRepository({ storage })
@@ -98,7 +114,54 @@ describe('ImportExportPanel', () => {
           id: 'card-valid-1',
           note: '有效示例',
           rawSecret: 'JBSW Y3DP EH PK3PXP',
+          color: 'slate',
         }),
+      ],
+    })
+  })
+
+  it('导入卡片时会基于现有最后颜色自动轮换新颜色', async () => {
+    const storage = createMemoryStorage()
+    const repository = createCardRepository({ storage })
+    repository.save(createCard({ id: 'card-existing', color: 'blue' }))
+
+    render(
+      <ImportExportPanel
+        cards={[createCard({ id: 'card-existing', color: 'blue' })]}
+        readSelectedFile={vi.fn().mockResolvedValue(`{
+  "version": 1,
+  "exportedAt": "2026-04-12T00:00:00.000Z",
+  "cards": [
+    {
+      "id": "card-valid-2",
+      "rawSecret": "GEZD GNBV GY3T QOJQ",
+      "normalizedSecret": "GEZDGNBVGY3TQOJQ",
+      "note": "AWS",
+      "color": "rose",
+      "createdAt": "2026-04-12T00:00:00.000Z",
+      "updatedAt": "2026-04-12T00:00:00.000Z"
+    }
+  ]
+}`)}
+        repository={repository}
+      />,
+    )
+
+    fireEvent.change(screen.getByTestId('import-file-input'), {
+      target: {
+        files: [new File(['ignored'], 'import-rotate.json', { type: 'application/json' })],
+      },
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('import-added-count')).toHaveTextContent('1')
+    })
+
+    expect(repository.load()).toEqual({
+      ok: true,
+      value: [
+        expect.objectContaining({ id: 'card-existing', color: 'blue' }),
+        expect.objectContaining({ id: 'card-valid-2', color: 'green' }),
       ],
     })
   })
