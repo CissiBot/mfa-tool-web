@@ -1,11 +1,11 @@
 import { useRef, useState, type ChangeEvent } from 'react'
-import { createPortal } from 'react-dom'
 import type { LucideIcon } from 'lucide-react'
 
 import type { CardRecord } from '../../lib/storage'
 import type { CardRepository } from '../../lib/storage/repository'
 import { appCardRepository } from '../cards'
 import { ConfirmationDialog } from './ConfirmationDialog'
+import { ImportExportFeedbackPanel, type ImportExportFeedback } from './ImportExportFeedback'
 import {
   createExportFileName,
   downloadTextFile,
@@ -32,21 +32,6 @@ export interface ImportExportPanelProps {
 
 type ConfirmAction = 'export' | 'clear' | null
 
-type PanelFeedback =
-  | {
-      kind: 'summary'
-      tone: 'success' | 'warning' | 'danger'
-      title: string
-      description: string
-      summary: ImportCardsSummary
-    }
-  | {
-      kind: 'message'
-      tone: 'success' | 'danger'
-      title: string
-      description: string
-    }
-
 export function ImportExportPanel({
   cards,
   repository = appCardRepository,
@@ -62,7 +47,7 @@ export function ImportExportPanel({
 }: ImportExportPanelProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null)
-  const [feedback, setFeedback] = useState<PanelFeedback | null>(null)
+  const [feedback, setFeedback] = useState<ImportExportFeedback | null>(null)
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -236,7 +221,7 @@ export function ImportExportPanel({
         </div>
       ) : null}
 
-      {feedback ? <FeedbackPanel feedback={feedback} floating={toolbar} /> : null}
+      {feedback ? <ImportExportFeedbackPanel feedback={feedback} floating={toolbar} /> : null}
 
       {confirmAction === 'export' ? (
         <ConfirmationDialog
@@ -265,56 +250,6 @@ export function ImportExportPanel({
       ) : null}
     </>
   )
-}
-
-function FeedbackPanel({ feedback, floating = false }: { feedback: PanelFeedback; floating?: boolean }) {
-  const panel = (
-    <section
-      aria-live="polite"
-      className={`io-feedback${floating ? ' io-feedback--floating' : ''}`}
-      data-layout={floating ? 'floating' : 'inline'}
-      data-testid="import-feedback"
-      data-tone={feedback.tone}
-    >
-      <div className="io-feedback__header">
-        <strong>{feedback.title}</strong>
-        <p>{feedback.description}</p>
-      </div>
-
-      {feedback.kind === 'summary' ? (
-        <>
-          <div className="io-feedback__metrics">
-            <div>
-              <span>新增</span>
-              <strong data-testid="import-added-count">{feedback.summary.importedCount}</strong>
-            </div>
-            <div>
-              <span>跳过重复</span>
-              <strong data-testid="import-skipped-count">{feedback.summary.skippedDuplicates}</strong>
-            </div>
-            <div>
-              <span>失败</span>
-              <strong data-testid="import-failed-count">{feedback.summary.failedCount}</strong>
-            </div>
-          </div>
-
-          {feedback.summary.failedReasons.length > 0 ? (
-            <ul className="io-feedback__issues">
-              {feedback.summary.failedReasons.map((reason) => (
-                <li key={reason}>{reason}</li>
-              ))}
-            </ul>
-          ) : null}
-        </>
-      ) : null}
-    </section>
-  )
-
-  if (!floating || typeof document === 'undefined') {
-    return panel
-  }
-
-  return createPortal(panel, document.body)
 }
 
 function resolveImportTone(summary: ImportCardsSummary): 'success' | 'warning' | 'danger' {
