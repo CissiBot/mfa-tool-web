@@ -1,11 +1,12 @@
 import { useCallback, useMemo, useState } from 'react'
 import { FileDown, FileUp, Plus } from 'lucide-react'
 
-import { CardPreview, appCardRepository } from '../features/cards'
+import { appCardRepository } from '../features/cards'
 import type { CardRecord } from '../lib/storage'
 import { ImportExportPanel } from '../features/import-export'
 import type { CardRepository } from '../lib/storage/repository'
 import { getTotpTimeWindow } from '../lib/totp'
+import { AppCardListSection } from './AppCardListSection'
 import { AppWorkspace, type WorkspaceFocusField, type WorkspaceState } from './AppWorkspace'
 import { moveCard, sortCardsByIds } from './app-card-order'
 import { appCardCollectionStore, type CardCollectionStore, useCardCollection } from './card-store'
@@ -142,56 +143,21 @@ function App({
           </div>
         </div>
 
-        <div className="card-list" data-testid="card-list" aria-live="polite">
-          {!collection.hydrated ? (
-            <div className="status-card status-card--loading">正在同步本地卡片…</div>
-          ) : collection.error ? (
-            <div className="status-card status-card--warning">无法读取本地数据：{collection.error.message}</div>
-          ) : collection.cards.length === 0 ? (
-            <div className="empty-state" data-testid="empty-state">
-              <span className="empty-state__badge">暂无卡片</span>
-              <p>点击“添加卡片”开始使用。</p>
-            </div>
-          ) : (
-            <>
-              <div className="card-list__table-head" data-testid="card-table-head" aria-hidden="true">
-                <span>备注 / 密钥</span>
-                <span>验证码</span>
-                <span>操作</span>
-              </div>
-
-              {orderedCards.map((card) => (
-                <CardPreview
-                  key={card.id}
-                  card={card}
-                  repository={cardRepository}
-                  timeWindow={timeWindow}
-                  draggable
-                  isDragging={draggedCardId === card.id}
-                  isDropTarget={dropTargetCardId === card.id && draggedCardId !== card.id}
-                  onDragEnd={() => {
-                    resetDragState()
-                  }}
-                  onDragOver={() => {
-                    handlePreviewReorder(card.id)
-                  }}
-                  onDragStart={() => {
-                    handleDragStart(card.id)
-                  }}
-                  onDrop={() => {
-                    handleDropReorder(card.id)
-                  }}
-                  onEditNote={() => {
-                    openEditWorkspace(card, 'note')
-                  }}
-                  onEditSecret={() => {
-                    openEditWorkspace(card, 'secret')
-                  }}
-                />
-              ))}
-            </>
-          )}
-        </div>
+        <AppCardListSection
+          hydrated={collection.hydrated}
+          error={collection.error}
+          cards={collection.cards}
+          orderedCards={orderedCards}
+          repository={cardRepository}
+          timeWindow={timeWindow}
+          draggedCardId={draggedCardId}
+          dropTargetCardId={dropTargetCardId}
+          onResetDragState={resetDragState}
+          onPreviewReorder={handlePreviewReorder}
+          onDragStart={handleDragStart}
+          onDropReorder={handleDropReorder}
+          onOpenEditWorkspace={openEditWorkspace}
+        />
       </main>
 
       {workspaceState ? (
