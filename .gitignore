@@ -14,3 +14,9 @@ yarn-debug.log*
 yarn-error.log*
 *.log
 .sisyphus/
+
+# Local AI / QA artifacts
+.playwright-cli/
+.graphify_*
+graphify-out/
+web-articles/
