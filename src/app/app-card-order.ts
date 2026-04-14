@@ -14,6 +14,21 @@ export function moveCard(ids: string[], draggedId: string, targetId: string): st
   return nextIds
 }
 
+export function moveCardToIndex(ids: string[], draggedId: string, targetIndex: number): string[] {
+  const draggedIndex = ids.indexOf(draggedId)
+
+  if (draggedIndex === -1) {
+    return ids
+  }
+
+  const nextIds = [...ids]
+  const [dragged] = nextIds.splice(draggedIndex, 1)
+  const boundedTargetIndex = Math.max(0, Math.min(targetIndex, nextIds.length))
+
+  nextIds.splice(boundedTargetIndex, 0, dragged)
+  return nextIds
+}
+
 export function sortCardsByIds(cards: CardRecord[], orderIds: string[] | null): CardRecord[] {
   if (!orderIds) {
     return cards

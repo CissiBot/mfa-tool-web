@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react'
 import { Copy, GripVertical, KeyRound, PenLine, Trash2 } from 'lucide-react'
 
 import type { CardRecord } from '../../lib/storage'
@@ -16,13 +24,12 @@ export interface OtpCardProps {
   copyCode?: (code: string) => Promise<void>
   onEditNote?: () => void
   onEditSecret?: () => void
-  draggable?: boolean
   isDragging?: boolean
-  isDropTarget?: boolean
-  onDragStart?: () => void
-  onDragOver?: () => void
-  onDrop?: () => void
-  onDragEnd?: () => void
+  onDragHandlePointerDown?: (event: ReactPointerEvent<HTMLButtonElement>) => void
+  onDragHandleKeyDown?: (event: ReactKeyboardEvent<HTMLButtonElement>) => void
+  onDragHandleLostPointerCapture?: (event: ReactPointerEvent<HTMLButtonElement>) => void
+  dragHandleRef?: (node: HTMLButtonElement | null) => void
+  isKeyboardDragging?: boolean
 }
 
 const OTP_CODE_PLACEHOLDER = '------'
@@ -36,13 +43,12 @@ export function OtpCard({
   copyCode = copyOtpCode,
   onEditNote,
   onEditSecret,
-  draggable = false,
   isDragging = false,
-  isDropTarget = false,
-  onDragStart,
-  onDragOver,
-  onDrop,
-  onDragEnd,
+  onDragHandlePointerDown,
+  onDragHandleKeyDown,
+  onDragHandleLostPointerCapture,
+  dragHandleRef,
+  isKeyboardDragging = false,
 }: OtpCardProps) {
   void repository
   const [otpCode, setOtpCode] = useState(OTP_CODE_PLACEHOLDER)
@@ -145,17 +151,8 @@ export function OtpCard({
       className="otp-card"
       data-color={card.color}
       data-dragging={isDragging ? 'true' : 'false'}
-      data-drop-target={isDropTarget ? 'true' : 'false'}
       data-testid={`card-${card.id}`}
       style={progressStyle}
-      onDragOver={(event) => {
-        event.preventDefault()
-        onDragOver?.()
-      }}
-      onDrop={(event) => {
-        event.preventDefault()
-        onDrop?.()
-      }}
     >
       <div className="otp-card__row">
         <div className="otp-card__details">
@@ -180,14 +177,17 @@ export function OtpCard({
         </section>
 
         <div className="otp-card__actions" aria-label="卡片操作">
-          <span
+          <button
             className="otp-card__drag-handle"
             data-testid="drag-handle"
+            ref={dragHandleRef}
             aria-label={`拖动排序：${noteLabel}`}
-            draggable={draggable}
+            aria-pressed={isKeyboardDragging}
             title={`拖动排序：${noteLabel}`}
-            onDragEnd={onDragEnd}
-            onDragStart={onDragStart}
+            type="button"
+            onPointerDown={onDragHandlePointerDown}
+            onKeyDown={onDragHandleKeyDown}
+            onLostPointerCapture={onDragHandleLostPointerCapture}
           >
             <span className="otp-card__drag-icon" aria-hidden="true">
               <GripVertical size={15} strokeWidth={2} />
@@ -196,7 +196,7 @@ export function OtpCard({
             <span className="otp-card__drag-tooltip" aria-hidden="true">
               拖动排序
             </span>
-          </span>
+          </button>
 
           <button
             className="otp-card__action-button"

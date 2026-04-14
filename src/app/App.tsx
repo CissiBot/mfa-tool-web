@@ -8,7 +8,7 @@ import type { CardRepository } from '../lib/storage/repository'
 import { getTotpTimeWindow } from '../lib/totp'
 import { AppCardListSection } from './AppCardListSection'
 import { AppWorkspace } from './AppWorkspace'
-import { moveCard, sortCardsByIds } from './app-card-order'
+import { moveCardToIndex, sortCardsByIds } from './app-card-order'
 import type { WorkspaceFocusField, WorkspaceState } from './app-workspace-contract'
 import { appCardCollectionStore, type CardCollectionStore, useCardCollection } from './card-store'
 import { appTimeStore, type TimeStore, useTimeSnapshot } from './time-store'
@@ -32,7 +32,6 @@ function App({
   const [workspaceReturnFocusTarget, setWorkspaceReturnFocusTarget] = useState<HTMLElement | null>(null)
   const [cardPendingRemoval, setCardPendingRemoval] = useState<CardRecord | null>(null)
   const [draggedCardId, setDraggedCardId] = useState<string | null>(null)
-  const [dropTargetCardId, setDropTargetCardId] = useState<string | null>(null)
   const [previewOrderIds, setPreviewOrderIds] = useState<string[] | null>(null)
   const orderedCards = useMemo(
     () => sortCardsByIds(collection.cards, previewOrderIds),
@@ -55,42 +54,39 @@ function App({
 
   const resetDragState = useCallback(() => {
     setDraggedCardId(null)
-    setDropTargetCardId(null)
     setPreviewOrderIds(null)
   }, [])
 
   const handleDragStart = useCallback(
     (cardId: string) => {
       setDraggedCardId(cardId)
-      setDropTargetCardId(cardId)
       setPreviewOrderIds(collection.cards.map((card) => card.id))
     },
     [collection.cards],
   )
 
   const handlePreviewReorder = useCallback(
-    (targetCardId: string) => {
-      if (!draggedCardId || draggedCardId === targetCardId) {
+    (targetIndex: number) => {
+      if (!draggedCardId) {
         return
       }
 
-      setDropTargetCardId(targetCardId)
       setPreviewOrderIds((current) => {
         const baseIds = current ?? collection.cards.map((card) => card.id)
-        return moveCard(baseIds, draggedCardId, targetCardId)
+        return moveCardToIndex(baseIds, draggedCardId, targetIndex)
       })
     },
     [collection.cards, draggedCardId],
   )
 
-  const handleDropReorder = (targetCardId: string) => {
+  const handleDropReorder = () => {
     if (!draggedCardId) {
       resetDragState()
       return
     }
 
     const currentIds = collection.cards.map((card) => card.id)
-    const orderedIds = previewOrderIds ?? moveCard(currentIds, draggedCardId, targetCardId)
+    const orderedIds = previewOrderIds ?? currentIds
 
     resetDragState()
 
@@ -188,7 +184,6 @@ function App({
           repository={cardRepository}
           timeWindow={timeWindow}
           draggedCardId={draggedCardId}
-          dropTargetCardId={dropTargetCardId}
           onResetDragState={resetDragState}
           onPreviewReorder={handlePreviewReorder}
           onDragStart={handleDragStart}

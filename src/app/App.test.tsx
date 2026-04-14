@@ -7,6 +7,20 @@ import { createCardCollectionStore, type CardCollectionSnapshot, type CardCollec
 import type { TimeStore } from './time-store'
 
 describe('App', () => {
+  beforeAll(() => {
+    if (!HTMLElement.prototype.setPointerCapture) {
+      HTMLElement.prototype.setPointerCapture = () => {}
+    }
+
+    if (!HTMLElement.prototype.releasePointerCapture) {
+      HTMLElement.prototype.releasePointerCapture = () => {}
+    }
+
+    if (!HTMLElement.prototype.hasPointerCapture) {
+      HTMLElement.prototype.hasPointerCapture = () => false
+    }
+  })
+
   it('首页默认只显示卡片区与添加入口，操作面板按需打开', () => {
     render(<App cardStore={createMockCardStore(createSnapshot())} timeStore={createMockTimeStore()} />)
 
@@ -248,14 +262,23 @@ describe('App', () => {
     const cardStore = createCardCollectionStore({ repository, targetWindow: undefined })
     const view = render(<App cardStore={cardStore} cardRepository={repository} timeStore={createMockTimeStore()} />)
 
+    mockCardItemRect('card-card-github', { top: 0, left: 0, width: 1200, height: 110 })
+    mockCardItemRect('card-card-aws', { top: 132, left: 0, width: 1200, height: 110 })
+
     expect(readCardOrder()).toEqual(['GitHub', 'AWS'])
 
-    fireEvent.dragStart(within(screen.getByTestId('card-card-github')).getByTestId('drag-handle'))
-    fireEvent.dragOver(screen.getByTestId('card-card-aws'))
-
-    expect(readCardOrder()).toEqual(['AWS', 'GitHub'])
-
-    fireEvent.drop(screen.getByTestId('card-card-aws'))
+    fireEvent.pointerDown(within(screen.getByTestId('card-card-github')).getByTestId('drag-handle'), {
+      button: 0,
+      pointerId: 1,
+      clientX: 96,
+      clientY: 54,
+    })
+    fireEvent.pointerMove(window, {
+      pointerId: 1,
+      clientX: 96,
+      clientY: 244,
+    })
+    fireEvent.pointerUp(window, { pointerId: 1 })
 
     await waitFor(() => {
       expect(readCardOrder()).toEqual(['AWS', 'GitHub'])
@@ -303,10 +326,119 @@ describe('App', () => {
 
     render(<App cardStore={cardStore} cardRepository={repository} timeStore={createMockTimeStore()} />)
 
-    fireEvent.dragStart(within(screen.getByTestId('card-card-github')).getByTestId('drag-handle'))
-    fireEvent.dragEnd(within(screen.getByTestId('card-card-github')).getByTestId('drag-handle'))
+    mockCardItemRect('card-card-github', { top: 0, left: 0, width: 1200, height: 110 })
+    mockCardItemRect('card-card-aws', { top: 132, left: 0, width: 1200, height: 110 })
+
+    fireEvent.pointerDown(within(screen.getByTestId('card-card-github')).getByTestId('drag-handle'), {
+      button: 0,
+      pointerId: 1,
+      clientX: 96,
+      clientY: 54,
+    })
+    fireEvent.keyDown(window, { key: 'Escape' })
 
     expect(readCardOrder()).toEqual(['GitHub', 'AWS'])
+  })
+
+  it('pointercancel 后会清掉悬浮预览与占位状态', () => {
+    const storage = createMemoryStorage()
+    const repository = createCardRepository({ storage })
+    repository.save({
+      id: 'card-github',
+      rawSecret: 'JBSW Y3DP EH PK3PXP',
+      normalizedSecret: 'JBSWY3DPEHPK3PXP',
+      note: 'GitHub',
+      color: 'blue',
+      createdAt: '2026-04-12T00:00:00.000Z',
+      updatedAt: '2026-04-12T00:00:00.000Z',
+    })
+    repository.save({
+      id: 'card-aws',
+      rawSecret: 'GEZD GNBV GY3T QOJQ',
+      normalizedSecret: 'GEZDGNBVGY3TQOJQ',
+      note: 'AWS',
+      color: 'green',
+      createdAt: '2026-04-12T00:00:00.000Z',
+      updatedAt: '2026-04-12T00:00:00.000Z',
+    })
+
+    const cardStore = createCardCollectionStore({ repository, targetWindow: undefined })
+
+    render(<App cardStore={cardStore} cardRepository={repository} timeStore={createMockTimeStore()} />)
+
+    mockCardItemRect('card-card-github', { top: 0, left: 0, width: 1200, height: 110 })
+    mockCardItemRect('card-card-aws', { top: 132, left: 0, width: 1200, height: 110 })
+
+    fireEvent.pointerDown(within(screen.getByTestId('card-card-github')).getByTestId('drag-handle'), {
+      button: 0,
+      pointerId: 1,
+      clientX: 96,
+      clientY: 54,
+    })
+
+    expect(screen.getByTestId('card-list').querySelector('.card-list__placeholder')).not.toBeNull()
+    expect(document.querySelector('.card-list__drag-overlay')).not.toBeNull()
+
+    fireEvent.pointerCancel(window, { pointerId: 1 })
+
+    expect(readCardOrder()).toEqual(['GitHub', 'AWS'])
+    expect(screen.getByTestId('card-list').querySelector('.card-list__placeholder')).toBeNull()
+    expect(document.querySelector('.card-list__drag-overlay')).toBeNull()
+  })
+
+  it('键盘可完成卡片排序并持久化', async () => {
+    const storage = createMemoryStorage()
+    const repository = createCardRepository({ storage })
+    repository.save({
+      id: 'card-github',
+      rawSecret: 'JBSW Y3DP EH PK3PXP',
+      normalizedSecret: 'JBSWY3DPEHPK3PXP',
+      note: 'GitHub',
+      color: 'blue',
+      createdAt: '2026-04-12T00:00:00.000Z',
+      updatedAt: '2026-04-12T00:00:00.000Z',
+    })
+    repository.save({
+      id: 'card-aws',
+      rawSecret: 'GEZD GNBV GY3T QOJQ',
+      normalizedSecret: 'GEZDGNBVGY3TQOJQ',
+      note: 'AWS',
+      color: 'green',
+      createdAt: '2026-04-12T00:00:00.000Z',
+      updatedAt: '2026-04-12T00:00:00.000Z',
+    })
+
+    const cardStore = createCardCollectionStore({ repository, targetWindow: undefined })
+    const view = render(<App cardStore={cardStore} cardRepository={repository} timeStore={createMockTimeStore()} />)
+
+    const githubHandle = within(screen.getByTestId('card-card-github')).getByTestId('drag-handle')
+
+    githubHandle.focus()
+    fireEvent.keyDown(githubHandle, { key: 'Enter' })
+    fireEvent.keyDown(githubHandle, { key: 'ArrowDown' })
+
+    expect(readCardOrder()).toEqual(['AWS', 'GitHub'])
+
+    fireEvent.keyDown(githubHandle, { key: 'Enter' })
+
+    await waitFor(() => {
+      expect(readCardOrder()).toEqual(['AWS', 'GitHub'])
+    })
+
+    view.unmount()
+
+    render(
+      <App
+        cardStore={createCardCollectionStore({
+          repository: createCardRepository({ storage }),
+          targetWindow: undefined,
+        })}
+        cardRepository={createCardRepository({ storage })}
+        timeStore={createMockTimeStore()}
+      />,
+    )
+
+    expect(readCardOrder()).toEqual(['AWS', 'GitHub'])
   })
 
   it('hydrated state 会渲染卡片列表而不是空状态', async () => {
@@ -452,6 +584,35 @@ function createSnapshot(cards: CardRecord[] = [], error: StorageError | null = n
 
 function readCardOrder(): string[] {
   return screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent ?? '')
+}
+
+function mockCardItemRect(
+  testId: string,
+  rect: { top: number; left: number; width: number; height: number },
+): void {
+  const card = screen.getByTestId(testId)
+  const item = card.parentElement
+
+  if (!item) {
+    throw new Error(`未找到 ${testId} 的列表项容器`)
+  }
+
+  Object.defineProperty(item, 'getBoundingClientRect', {
+    configurable: true,
+    value: () => ({
+      x: rect.left,
+      y: rect.top,
+      top: rect.top,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height,
+      right: rect.left + rect.width,
+      bottom: rect.top + rect.height,
+      toJSON() {
+        return rect
+      },
+    }),
+  })
 }
 
 function createMemoryStorage(initialState: Record<string, string> = {}): StorageLike {
