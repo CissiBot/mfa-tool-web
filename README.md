@@ -4,7 +4,10 @@
   <img src="./public/favicon.svg" alt="MFA Web 图标" width="72" height="72" />
 </p>
 
-一个面向日常使用的本地 TOTP 验证码工具网站，用来集中管理常用 MFA 卡片，并在浏览器中直接查看、复制、排序、备份与迁移验证码。
+<p align="center">
+  一个基于 <strong>Vite + React + TypeScript</strong> 构建的本地 TOTP 卡片工具。<br />
+  你可以在浏览器里集中查看、复制、整理、导入和导出常用 MFA 验证码。
+</p>
 
 <p align="center">
   <a href="https://vite.dev/"><img alt="Vite" src="https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white" /></a>
@@ -16,165 +19,184 @@
   <a href="https://docs.github.com/pages"><img alt="GitHub Pages" src="https://img.shields.io/badge/GitHub%20Pages-121013?logo=github&logoColor=white" /></a>
 </p>
 
-**在线使用：<https://mfa.cissi.top/>**
+<!-- README-I18N:START -->
+
+[English](./README.en.md) | **简体中文**
+
+<!-- README-I18N:END -->
 
 > [!IMPORTANT]
-> MFA Web 是本地工具，不是托管式安全服务。卡片数据默认保存在浏览器 `localStorage`，导出 JSON 也会保留原始密钥文本。
+> MFA Web 是本地前端工具，不是托管式安全服务。卡片数据默认保存在浏览器 `localStorage`，导出文件为明文 JSON，并保留原始 `rawSecret` 文本。
 
-## 为什么使用 MFA Web
+## 概览
 
-MFA Web 是一个基于 **Vite + React + TypeScript** 构建的纯前端应用，界面、验证码计算、卡片管理与导入导出都直接运行在浏览器中。
+这个项目把常用 TOTP 验证码整理成可管理的卡片列表。当前页面结构以卡片面板为中心：顶部提供 **导入 JSON**、**导出 JSON** 和 **添加卡片** 按钮，主体区域展示验证码卡片列表；新增与编辑操作通过覆盖层工作区完成，而不是在首页常驻表单中完成。
 
-- **固定入口**：把常用 TOTP 卡片集中放在一个稳定地址里
-- **纯前端运行**：验证码计算全部在浏览器内完成，不依赖后端
-- **本地整理能力**：支持新增、编辑、删除、拖动排序与快速复制验证码
-- **备份迁移直接**：支持明文 JSON 导入 / 导出，适合临时迁移与本地备份
-- **规则简单稳定**：固定使用标准 TOTP（SHA-1、6 位、30 秒）
-
-## 适用场景
-
-MFA Web 适合以下场景：
-
-- 管理一组常用的 TOTP 账号
-- 在浏览器里快速查看和复制验证码
-- 按使用频率整理卡片顺序
-- 在不同浏览器或设备之间手动导出 / 导入迁移
-
-它不适合以下预期：
-
-- 账号体系、团队协作或云同步
-- 服务端隔离存储
-- 硬件令牌级别的安全防护
-- 扫码录入、二维码识别或 otpauth URI 工作流
+所有验证码计算都在浏览器内完成，当前实现固定使用标准 TOTP：`SHA-1`、`6` 位、`30` 秒周期。
 
 ## 核心能力
 
-### 本地卡片管理
+- **本地卡片管理**：新增、编辑、删除卡片，保存后立即刷新列表
+- **实时验证码**：在浏览器中生成 TOTP，并显示刷新进度
+- **快速复制**：一键复制当前 6 位验证码到剪贴板
+- **排序整理**：支持鼠标拖拽和键盘排序，结果会持久化保存
+- **导入导出**：支持明文 JSON 导入与导出，并提供逐条校验反馈
+- **跨标签页同步**：本地数据变化后可通过 `storage` 事件刷新其他标签页视图
 
-- 新增卡片
-- 分别修改备注与密钥
-- 删除单张卡片前会先确认
-- 拖动卡片实时排序
-- 新增卡片时自动轮换默认颜色
+## 当前产品边界
 
-### 实时验证码
+MFA Web 当前明确聚焦在“本地查看和整理 TOTP 卡片”，以下能力**不在现有实现范围内**：
 
-- 浏览器本地生成 6 位 TOTP 验证码
-- 自动按 30 秒周期刷新
-- 显示当前刷新进度
-- 一键复制当前验证码
+- 没有后端、账号体系、用户登录或服务端存储
+- 没有团队协作、云同步或远程备份
+- 没有扫码录入、二维码识别或 `otpauth://` 工作流
+- 没有 HOTP，也没有可配置哈希算法、位数或时间周期
+
+如果你需要更强的隔离、防泄漏、多设备同步或组织级审计能力，应使用专门的密码管理器、硬件令牌或企业安全方案，而不是把当前页面当作安全保险箱。
+
+## 使用方式
+
+### 添加卡片
+
+1. 点击右上角 **添加卡片**
+2. 输入 Base32 格式的 MFA 密钥
+3. 选填备注
+4. 保存后卡片会写入本地仓储，并立即出现在列表中
+
+### 查看、复制与编辑
+
+- 卡片会展示备注、原始密钥文本和当前验证码
+- 点击 **复制** 可把当前验证码写入剪贴板
+- 可分别进入“修改备注”或“修改密钥”工作区
+- 删除前会显示确认弹窗，取消不会改动已有数据
+
+### 排序
+
+- 支持指针拖拽排序
+- 也支持键盘排序：`Enter` / `空格` 拿起卡片，`↑` / `↓` 移动，`Enter` 确认，`Escape` 取消
 
 ### 导入与导出
 
-- 导出当前卡片为明文 JSON
-- 导出前显示风险确认
-- 导入后反馈新增、重复跳过与失败原因
-- 支持基于同一 schema 的本地备份恢复
+- **导入 JSON**：读取本地文件，逐条校验 schema，并反馈新增、重复跳过与失败原因
+- **导出 JSON**：导出前强制进行风险确认，生成的文件为明文，包含原始 `rawSecret`
 
 ## 快速开始
 
-### 直接使用
+### 环境要求
 
-打开：<https://mfa.cissi.top/>
+- Node.js 22（CI 当前使用该版本）
+- pnpm 10
+
+### 安装依赖
+
+```bash
+pnpm install
+```
 
 ### 本地开发
 
 ```bash
-pnpm install
 pnpm dev
 ```
 
-### 本地验证
+请通过 Vite 开发服务器或预览服务器访问页面，不要直接以 `file://` 方式打开 `index.html`；当前入口依赖 `/src/main.tsx`、`/favicon.svg` 这类由 Vite 提供的资源路径，直接打开本地 HTML 不属于仓库支持的运行方式，而且浏览器在该场景下对 `localStorage` 的行为也不稳定。
+
+### 常用命令
 
 ```bash
 pnpm lint
 pnpm test
 pnpm build
-pnpm exec playwright test e2e/app.smoke.spec.ts --config=playwright.config.ts
+pnpm test:ui
+pnpm preview
 ```
 
 > [!NOTE]
-> E2E smoke 复用仓库现有的生产预览链路：先构建，再通过 `vite preview` 验证页面行为。
+> `pnpm build` 实际会执行 `tsc -b && vite build`。类型检查不仅覆盖 `src`，也会覆盖 `vite.config.ts` 和 `playwright.config.ts`。
 
-## 常见操作
+## 验证链路
 
-### 添加卡片
+推荐的最小验证闭环是：
 
-1. 点击右上角 **添加卡片**
-2. 输入 Base32 密钥
-3. 可选填写备注
-4. 保存后卡片会立即出现在列表中，下一张新卡会自动轮换默认颜色
+```bash
+pnpm lint
+pnpm test
+pnpm build
+```
 
-### 编辑与整理
+如果你要做更聚焦的验证，仓库当前常见测试入口包括：
 
-- 可分别修改备注与密钥
-- 删除前会显示二次确认，取消不会影响现有卡片
-- 拖动排序把手可调整卡片顺序
-- 拖动过程中列表会实时换位
+```bash
+pnpm vitest run src/lib/totp/**/*.test.ts
+pnpm vitest run src/lib/storage/**/*.test.ts
+pnpm vitest run src/app/App.test.tsx
+pnpm vitest run src/features/cards/CardComposer.test.tsx
+pnpm vitest run src/features/cards/OtpCard.test.tsx
+pnpm vitest run src/features/import-export/**/*.test.tsx
+```
 
-### 导出备份
+### 关于 Playwright
 
-1. 点击 **导出 JSON**
-2. 阅读并确认明文导出风险
-3. 下载备份文件并保存在受信任位置
+`pnpm test:ui` 使用的是 Playwright 配置，但运行方式不是 `pnpm dev`，而是：
 
-### 导入数据
+```bash
+pnpm build
+pnpm exec vite preview --host 127.0.0.1 --port 4173 --strictPort
+```
 
-1. 点击 **导入 JSON**
-2. 选择符合格式的备份文件
-3. 查看导入结果中的新增、跳过和失败原因
+> [!CAUTION]
+> 当前 `e2e/app.smoke.spec.ts` 依赖 WSL 下调用 Windows Edge 与 CDP，包含硬编码的 `msedge.exe`、PowerShell 和 `cmd.exe` 路径。它不是一个无环境前提的通用跨平台 smoke，用于本地验证时需要先确认环境具备这条链路。
+>
+> 另外，这个 smoke 用例的部分断言仍基于旧首页结构，和现行 UI 已有漂移；`pnpm test:ui` 更适合作为环境受限的参考验证，不应直接视为当前页面规格的权威来源。
 
-## 数据与安全边界
+## 数据与安全说明
 
-### 数据存储方式
+### 本地存储约定
 
-- 卡片默认保存在当前浏览器的 `localStorage`
-- 导出文件是明文 JSON
-- 导出内容会保留原始 `rawSecret` 文本
-
-这意味着浏览器环境、同机账户、恶意扩展、恶意程序或系统级入侵，都可能接触到这些数据。
-
-### 安全定位
-
-MFA Web 是本地使用工具，重点在于录入、查看、整理与备份，不是密钥保险箱。
-
-如果需要更强的隔离、防泄漏或多设备同步能力，应配合专门的密码管理器、硬件令牌或受控企业安全方案使用，而不是依赖当前页面本身。
-
-### 访问入口与域名
-
-生产入口固定为 `https://mfa.cissi.top/`。
-
-这个域名提供的是稳定入口与迁移灵活性，不改变 `localStorage`、导出文件或浏览器环境本身的安全边界。
-
-## 技术参考
-
-### TOTP 规则
-
-- 哈希算法：`SHA-1`
-- 验证码位数：`6`
-- 时间步长：`30 秒`
-
-### 存储约定
-
-- localStorage key：`mfa-web/cards:v1`
+- `localStorage` key：`mfa-web/cards:v1`
 - storage schema version：`1`
+- 导出格式：明文 JSON
+- 导出内容：包含 `rawSecret`、`normalizedSecret`、备注、颜色与时间戳
 
-### 仓库结构
+### TOTP 固定规则
 
-- `src/app/`：应用壳层、页面装配、全局状态
-- `src/features/cards/`：卡片录入、展示、编辑与排序交互
-- `src/features/import-export/`：导入导出、确认弹窗与反馈提示
-- `src/lib/storage/`：存储 schema、仓储与数据约束
-- `src/lib/totp/`：Base32 规范化与 TOTP 计算
-- `e2e/`：Playwright smoke 用例与辅助数据
+- 算法：`SHA-1`
+- 位数：`6`
+- 周期：`30` 秒
 
-## 维护者参考
+### 安全边界
 
-- 构建命令：`pnpm build`
-- 输出目录：`dist`
+验证码计算不会上传到后端，但这**不等于安全存储**。浏览器环境、同机账户、恶意扩展、恶意程序、聊天记录、网盘历史或共享目录，都可能暴露本地卡片和导出文件中的密钥内容。
 
-当前 Vite 配置兼容本地开发与根路径静态托管；如果部署链路、构建方式或主入口发生变化，应同步更新本 README。
+如果仓库将来配置了自定义域名，它只影响访问入口和部署路径，不会改变浏览器 `localStorage` 与明文导出的风险边界。
 
-## 后续维护重点
+## 项目结构
 
-优先关注核心交互稳定性、导入导出反馈可读性，以及文档中的入口、命令与实际线上链路是否持续一致。
+```text
+src/
+  app/                  应用壳层、工作区开关、列表态、排序与全局时间/卡片 store
+  features/cards/       卡片录入、展示、复制、编辑与排序交互
+  features/import-export/ 导入导出入口、确认弹窗、反馈提示与文件 IO
+  lib/storage/          schema、localStorage 仓储与导入合并逻辑
+  lib/totp/             Base32 规范化 / 解码与 TOTP 计算
+e2e/                    Playwright smoke 用例与辅助文件
+```
+
+## 部署
+
+仓库当前通过 GitHub Pages 部署：
+
+- 触发方式：`main` 分支 push 或手动触发 workflow
+- 构建环境：Node.js 22 + pnpm 10
+- 安装方式：`pnpm install --frozen-lockfile`
+- 构建产物：`dist`
+
+Vite 的 `base` 不是写死的，而是会根据以下条件动态决定：
+
+- 仓库根目录是否存在 `CNAME`
+- 是否运行在 GitHub Actions 中
+- 仓库名是否等于 `<owner>.github.io`
+
+这意味着 README 不应把部署路径或自定义域名写成固定不变的事实；如果部署入口发生变化，应同步更新此文档。
+
+另外，`pnpm preview` 仅用于本地检查构建产物，不是正式生产服务器。
