@@ -30,6 +30,7 @@ export interface OtpCardProps {
   onDragHandleLostPointerCapture?: (event: ReactPointerEvent<HTMLButtonElement>) => void
   dragHandleRef?: (node: HTMLButtonElement | null) => void
   isKeyboardDragging?: boolean
+  pauseProgressAnimation?: boolean
 }
 
 const OTP_CODE_PLACEHOLDER = '------'
@@ -49,6 +50,7 @@ export function OtpCard({
   onDragHandleLostPointerCapture,
   dragHandleRef,
   isKeyboardDragging = false,
+  pauseProgressAnimation = false,
 }: OtpCardProps) {
   void repository
   const [otpCode, setOtpCode] = useState(OTP_CODE_PLACEHOLDER)
@@ -83,7 +85,10 @@ export function OtpCard({
 
     updateProgressRatio()
 
-    if (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (
+      pauseProgressAnimation ||
+      (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    ) {
       return () => {
         progressBar.style.removeProperty('--otp-progress-ratio-live')
       }
@@ -102,7 +107,7 @@ export function OtpCard({
       window.cancelAnimationFrame(frameId)
       progressBar.style.removeProperty('--otp-progress-ratio-live')
     }
-  }, [progressDurationMs, timeWindow.counter, timeWindow.startedAt])
+  }, [pauseProgressAnimation, progressDurationMs, timeWindow.counter, timeWindow.startedAt])
 
   useEffect(() => {
     let cancelled = false

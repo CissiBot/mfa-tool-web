@@ -101,6 +101,24 @@ function createFrameAccent(cardId: string, attempt: number): string {
   return hslToHex(hue, 82, lightness)
 }
 
+function getLayoutViewportTop(element: HTMLElement): number {
+  const offsetParent = element.offsetParent instanceof HTMLElement ? element.offsetParent : element.parentElement
+
+  if (!(offsetParent instanceof HTMLElement)) {
+    return element.getBoundingClientRect().top
+  }
+
+  return offsetParent.getBoundingClientRect().top + element.offsetTop
+}
+
+function getLayoutHeight(element: HTMLElement): number {
+  return element.offsetHeight || element.getBoundingClientRect().height
+}
+
+function getLayoutViewportMidpointY(element: HTMLElement): number {
+  return getLayoutViewportTop(element) + getLayoutHeight(element) / 2
+}
+
 export function AppCardListSection({
   hydrated,
   error,
@@ -190,8 +208,7 @@ export function AppCardListSection({
           continue
         }
 
-        const rect = item.getBoundingClientRect()
-        const thresholdY = rect.top + rect.height / 2
+        const thresholdY = getLayoutViewportMidpointY(item)
 
         if (pointerCenterY < thresholdY) {
           return index
@@ -259,13 +276,20 @@ export function AppCardListSection({
   }
 
   useLayoutEffect(() => {
+    if (flipAnimationsRef.current.size > 0) {
+      flipAnimationsRef.current.forEach((animation) => {
+        animation.cancel()
+      })
+      flipAnimationsRef.current.clear()
+    }
+
     const nextTopById = new Map<string, number>()
 
     orderedCards.forEach((card) => {
       const item = itemRefs.current.get(card.id)
 
       if (item) {
-        nextTopById.set(card.id, item.getBoundingClientRect().top)
+        nextTopById.set(card.id, getLayoutViewportTop(item))
       }
     })
 
@@ -285,12 +309,6 @@ export function AppCardListSection({
         }
 
         const deltaY = previousTop - nextTop
-        const existingAnimation = flipAnimationsRef.current.get(cardId)
-
-        if (existingAnimation) {
-          existingAnimation.cancel()
-          flipAnimationsRef.current.delete(cardId)
-        }
 
         if (Math.abs(deltaY) < 1 || typeof item.animate !== 'function') {
           return
@@ -531,6 +549,7 @@ export function AppCardListSection({
                 repository={repository}
                 timeWindow={timeWindow}
                 isDragging
+                pauseProgressAnimation
               />
             </div>
           </div>,
@@ -592,6 +611,7 @@ export function AppCardListSection({
                       frameAccent={frameAccentByCardId.get(card.id)}
                       repository={repository}
                       timeWindow={timeWindow}
+                      pauseProgressAnimation={draggedCardId !== null}
                       onDragHandlePointerDown={(event) => {
                         handleDragHandlePointerDown(event, card.id)
                       }}

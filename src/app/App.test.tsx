@@ -434,6 +434,55 @@ describe('App', () => {
     expect(overlay?.style.top).toBe('132px')
   })
 
+  it('动画中的可视位置不会干扰拖拽阈值判断', () => {
+    const storage = createMemoryStorage()
+    const repository = createCardRepository({ storage })
+    repository.save({
+      id: 'card-github',
+      rawSecret: 'JBSW Y3DP EH PK3PXP',
+      normalizedSecret: 'JBSWY3DPEHPK3PXP',
+      note: 'GitHub',
+      color: 'blue',
+      createdAt: '2026-04-12T00:00:00.000Z',
+      updatedAt: '2026-04-12T00:00:00.000Z',
+    })
+    repository.save({
+      id: 'card-aws',
+      rawSecret: 'GEZD GNBV GY3T QOJQ',
+      normalizedSecret: 'GEZDGNBVGY3TQOJQ',
+      note: 'AWS',
+      color: 'green',
+      createdAt: '2026-04-12T00:00:00.000Z',
+      updatedAt: '2026-04-12T00:00:00.000Z',
+    })
+
+    const cardStore = createCardCollectionStore({ repository, targetWindow: undefined })
+
+    render(<App cardStore={cardStore} cardRepository={repository} timeStore={createMockTimeStore()} />)
+
+    mockCardItemRect('card-card-github', { top: 0, left: 0, width: 1200, height: 110 })
+    mockCardItemRect(
+      'card-card-aws',
+      { top: -50, left: 0, width: 1200, height: 110 },
+      { layoutTop: 132 },
+    )
+
+    fireEvent.pointerDown(within(screen.getByTestId('card-card-github')).getByTestId('drag-handle'), {
+      button: 0,
+      pointerId: 1,
+      clientX: 96,
+      clientY: 54,
+    })
+    fireEvent.pointerMove(window, {
+      pointerId: 1,
+      clientX: 96,
+      clientY: 99,
+    })
+    fireEvent.pointerUp(window, { pointerId: 1 })
+
+    expect(readCardOrder()).toEqual(['GitHub', 'AWS'])
+  })
+
   it('键盘可完成卡片排序并持久化', async () => {
     const storage = createMemoryStorage()
     const repository = createCardRepository({ storage })
@@ -637,13 +686,50 @@ function readCardOrder(): string[] {
 function mockCardItemRect(
   testId: string,
   rect: { top: number; left: number; width: number; height: number },
+  options?: { layoutTop?: number; offsetParentTop?: number },
 ): void {
   const card = screen.getByTestId(testId)
   const item = card.parentElement
+  const cardList = screen.getByTestId('card-list')
 
   if (!item) {
     throw new Error(`未找到 ${testId} 的列表项容器`)
   }
+
+  const layoutTop = options?.layoutTop ?? rect.top
+  const offsetParentTop = options?.offsetParentTop ?? 0
+
+  Object.defineProperty(cardList, 'getBoundingClientRect', {
+    configurable: true,
+    value: () => ({
+      x: 0,
+      y: offsetParentTop,
+      top: offsetParentTop,
+      left: 0,
+      width: rect.width,
+      height: 0,
+      right: rect.width,
+      bottom: offsetParentTop,
+      toJSON() {
+        return { top: offsetParentTop }
+      },
+    }),
+  })
+
+  Object.defineProperty(item, 'offsetParent', {
+    configurable: true,
+    value: cardList,
+  })
+
+  Object.defineProperty(item, 'offsetTop', {
+    configurable: true,
+    value: layoutTop - offsetParentTop,
+  })
+
+  Object.defineProperty(item, 'offsetHeight', {
+    configurable: true,
+    value: rect.height,
+  })
 
   Object.defineProperty(item, 'getBoundingClientRect', {
     configurable: true,
