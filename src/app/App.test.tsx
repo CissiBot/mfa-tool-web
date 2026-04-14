@@ -386,6 +386,54 @@ describe('App', () => {
     expect(document.querySelector('.card-list__drag-overlay')).toBeNull()
   })
 
+  it('拖拽悬浮卡片只沿纵向移动，不跟随鼠标横向偏移', () => {
+    const storage = createMemoryStorage()
+    const repository = createCardRepository({ storage })
+    repository.save({
+      id: 'card-github',
+      rawSecret: 'JBSW Y3DP EH PK3PXP',
+      normalizedSecret: 'JBSWY3DPEHPK3PXP',
+      note: 'GitHub',
+      color: 'blue',
+      createdAt: '2026-04-12T00:00:00.000Z',
+      updatedAt: '2026-04-12T00:00:00.000Z',
+    })
+    repository.save({
+      id: 'card-aws',
+      rawSecret: 'GEZD GNBV GY3T QOJQ',
+      normalizedSecret: 'GEZDGNBVGY3TQOJQ',
+      note: 'AWS',
+      color: 'green',
+      createdAt: '2026-04-12T00:00:00.000Z',
+      updatedAt: '2026-04-12T00:00:00.000Z',
+    })
+
+    const cardStore = createCardCollectionStore({ repository, targetWindow: undefined })
+
+    render(<App cardStore={cardStore} cardRepository={repository} timeStore={createMockTimeStore()} />)
+
+    mockCardItemRect('card-card-github', { top: 0, left: 48, width: 1200, height: 110 })
+    mockCardItemRect('card-card-aws', { top: 132, left: 48, width: 1200, height: 110 })
+
+    fireEvent.pointerDown(within(screen.getByTestId('card-card-github')).getByTestId('drag-handle'), {
+      button: 0,
+      pointerId: 1,
+      clientX: 144,
+      clientY: 54,
+    })
+    fireEvent.pointerMove(window, {
+      pointerId: 1,
+      clientX: 364,
+      clientY: 186,
+    })
+
+    const overlay = document.querySelector('.card-list__drag-overlay') as HTMLDivElement | null
+
+    expect(overlay).not.toBeNull()
+    expect(overlay?.style.left).toBe('48px')
+    expect(overlay?.style.top).toBe('132px')
+  })
+
   it('键盘可完成卡片排序并持久化', async () => {
     const storage = createMemoryStorage()
     const repository = createCardRepository({ storage })

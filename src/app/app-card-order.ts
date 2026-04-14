@@ -21,9 +21,14 @@ export function moveCardToIndex(ids: string[], draggedId: string, targetIndex: n
     return ids
   }
 
+  const boundedTargetIndex = Math.max(0, Math.min(targetIndex, ids.length - 1))
+
+  if (boundedTargetIndex === draggedIndex) {
+    return ids
+  }
+
   const nextIds = [...ids]
   const [dragged] = nextIds.splice(draggedIndex, 1)
-  const boundedTargetIndex = Math.max(0, Math.min(targetIndex, nextIds.length))
 
   nextIds.splice(boundedTargetIndex, 0, dragged)
   return nextIds

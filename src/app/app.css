@@ -1127,7 +1127,7 @@
 
 .otp-card[data-dragging='true'] {
   opacity: 1;
-  transform: scale(1.02) rotate(-0.35deg);
+  transform: none;
   box-shadow:
     0 0 0 2px color-mix(in srgb, var(--color-accent-cyan) 62%, rgba(255, 255, 255, 0.1)),
     0 28px 68px rgba(33, 87, 167, 0.36);
@@ -1135,9 +1135,9 @@
 }
 
 .card-list[data-drag-active='true'] .card-list__item[data-drag-placeholder='false'] .otp-card {
-  opacity: 0.78;
-  transform: scale(0.988);
-  filter: saturate(0.9) brightness(0.92);
+  opacity: 0.94;
+  transform: none;
+  filter: none;
 }
 
 .card-list__item[data-drag-placeholder='true'] {

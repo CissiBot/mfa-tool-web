@@ -35,7 +35,6 @@ interface AppCardListSectionProps {
 interface ActivePointerDrag {
   cardId: string
   pointerId: number
-  pointerOffsetX: number
   pointerOffsetY: number
   overlayX: number
   overlayY: number
@@ -138,9 +137,11 @@ export function AppCardListSection({
   }, [orderedCards])
   const itemRefs = useRef(new Map<string, HTMLDivElement>())
   const dragHandleRefs = useRef(new Map<string, HTMLButtonElement>())
+  const flipAnimationsRef = useRef(new Map<string, Animation>())
   const previousTopByIdRef = useRef<Map<string, number>>(new Map())
   const activeDragRef = useRef<ActivePointerDrag | null>(null)
   const keyboardDragCardIdRef = useRef<string | null>(null)
+  const pointerPreviewIndexRef = useRef<number | null>(null)
   const resolveInsertIndexRef = useRef<(pointerCenterY: number, currentDraggedCardId: string) => number>(() => 0)
   const finishDragRef = useRef<(shouldCommit: boolean) => void>(() => {})
   const [activeDrag, setActiveDrag] = useState<ActivePointerDrag | null>(null)
@@ -216,6 +217,7 @@ export function AppCardListSection({
   useEffect(() => {
     finishDragRef.current = (shouldCommit: boolean) => {
       cleanupDragHandleCapture(activeDragRef.current)
+      pointerPreviewIndexRef.current = null
       syncActiveDrag(null)
 
       if (keyboardDragCardIdRef.current) {
@@ -283,15 +285,35 @@ export function AppCardListSection({
         }
 
         const deltaY = previousTop - nextTop
+        const existingAnimation = flipAnimationsRef.current.get(cardId)
+
+        if (existingAnimation) {
+          existingAnimation.cancel()
+          flipAnimationsRef.current.delete(cardId)
+        }
 
         if (Math.abs(deltaY) < 1 || typeof item.animate !== 'function') {
           return
         }
 
-        item.animate([{ transform: `translateY(${deltaY}px)` }, { transform: 'translateY(0)' }], {
+        const animation = item.animate([{ transform: `translateY(${deltaY}px)` }, { transform: 'translateY(0)' }], {
           duration: 200,
           easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
         })
+
+        flipAnimationsRef.current.set(cardId, animation)
+
+        animation.onfinish = () => {
+          if (flipAnimationsRef.current.get(cardId) === animation) {
+            flipAnimationsRef.current.delete(cardId)
+          }
+        }
+
+        animation.oncancel = () => {
+          if (flipAnimationsRef.current.get(cardId) === animation) {
+            flipAnimationsRef.current.delete(cardId)
+          }
+        }
       })
     }
 
@@ -299,11 +321,23 @@ export function AppCardListSection({
   }, [draggedCardId, orderedCards])
 
   useEffect(() => {
+    const flipAnimations = flipAnimationsRef.current
+
+    return () => {
+      flipAnimations.forEach((animation) => {
+        animation.cancel()
+      })
+
+      flipAnimations.clear()
+    }
+  }, [])
+
+  useEffect(() => {
     if (!draggedCardId) {
       return
     }
 
-    const updateDragPosition = (clientX: number, clientY: number) => {
+    const updateDragPosition = (clientY: number) => {
       const currentDrag = activeDragRef.current
 
       if (!currentDrag) {
@@ -312,14 +346,21 @@ export function AppCardListSection({
 
       const nextDrag = {
         ...currentDrag,
-        overlayX: clientX - currentDrag.pointerOffsetX,
+        overlayX: currentDrag.overlayX,
         overlayY: clientY - currentDrag.pointerOffsetY,
       }
 
       syncActiveDrag(nextDrag)
 
       const pointerCenterY = clientY - currentDrag.pointerOffsetY + currentDrag.height / 2
-      onPreviewReorder(resolveInsertIndexRef.current(pointerCenterY, currentDrag.cardId))
+      const nextPreviewIndex = resolveInsertIndexRef.current(pointerCenterY, currentDrag.cardId)
+
+      if (pointerPreviewIndexRef.current === nextPreviewIndex) {
+        return
+      }
+
+      pointerPreviewIndexRef.current = nextPreviewIndex
+      onPreviewReorder(nextPreviewIndex)
     }
 
     const handlePointerMove = (event: PointerEvent) => {
@@ -330,7 +371,7 @@ export function AppCardListSection({
       }
 
       event.preventDefault()
-      updateDragPosition(event.clientX, event.clientY)
+      updateDragPosition(event.clientY)
     }
 
     const handlePointerUp = (event: PointerEvent) => {
@@ -401,7 +442,6 @@ export function AppCardListSection({
     const nextDrag: ActivePointerDrag = {
       cardId,
       pointerId: event.pointerId,
-      pointerOffsetX: event.clientX - rect.left,
       pointerOffsetY: event.clientY - rect.top,
       overlayX: rect.left,
       overlayY: rect.top,
@@ -409,6 +449,7 @@ export function AppCardListSection({
       height: rect.height,
     }
 
+    pointerPreviewIndexRef.current = orderedCards.findIndex((card) => card.id === cardId)
     onDragStart(cardId)
     syncActiveDrag(nextDrag)
 
