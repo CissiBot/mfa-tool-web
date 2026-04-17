@@ -64,6 +64,9 @@
 .app-toolbar__add,
 .app-toolbar__toggle-secrets,
 .app-toolbar__io .io-actions button {
+  --toolbar-button-padding-inline-start: 52px;
+  --toolbar-button-padding-inline-end: 28px;
+  --toolbar-button-label-hover-shift: -8px;
   position: relative;
   overflow: hidden;
   isolation: isolate;
@@ -73,7 +76,7 @@
   gap: 0;
   min-height: 48px;
   min-width: 136px;
-  padding: 0 28px 0 52px;
+  padding: 0 var(--toolbar-button-padding-inline-end) 0 var(--toolbar-button-padding-inline-start);
   border: none;
   border-radius: 999px;
   background: color-mix(in srgb, var(--toolbar-button-accent, var(--color-accent-violet)) 14%, rgba(11, 16, 29, 0.96));
@@ -186,7 +189,7 @@
 .app-toolbar__add:hover .app-toolbar__button-label,
 .app-toolbar__toggle-secrets:hover .app-toolbar__button-label,
 .app-toolbar__io .io-actions button:hover .app-toolbar__button-label {
-  transform: translateX(-8px);
+  transform: translateX(var(--toolbar-button-label-hover-shift));
 }
 
 .app-toolbar__add:hover .app-toolbar__button-icon--lead,
@@ -235,6 +238,8 @@
 
 .app-toolbar__toggle-secrets {
   --toolbar-button-accent: var(--color-accent-cyan);
+  --toolbar-button-padding-inline-end: 40px;
+  --toolbar-button-label-hover-shift: -16px;
 }
 
 .workspace-panel__close:focus-visible {
