@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import type { CardRecord } from '../../lib/storage'
 import { generateTotpCode, getTotpTimeWindow } from '../../lib/totp'
-import { getCardNoteLabel } from './display'
+import { getCardNoteLabel, maskSecret } from './display'
 import { OtpCard } from './OtpCard'
 
 describe('OtpCard', () => {
@@ -43,12 +43,19 @@ describe('OtpCard', () => {
     expect(screen.getByTestId('otp-progress')).toHaveAttribute('aria-valuenow', '29')
   })
 
-  it('卡面直接显示原始密钥，不再提供显隐切换', () => {
+  it('默认隐藏原始密钥，并在显式开启时显示明文', () => {
     const card = createCard({ rawSecret: 'JBSW Y3DP EH PK3PXP' })
-    render(<OtpCard card={card} timeWindow={getTotpTimeWindow(Date.parse('2026-04-12T12:00:19.000Z'))} />)
+    const timeWindow = getTotpTimeWindow(Date.parse('2026-04-12T12:00:19.000Z'))
+    const { rerender } = render(<OtpCard card={card} timeWindow={timeWindow} />)
+
+    expect(screen.getByTestId('otp-secret')).toHaveTextContent(maskSecret(card.rawSecret))
+    expect(screen.queryByTitle(card.rawSecret)).not.toBeInTheDocument()
+    expect(screen.queryByTestId('toggle-secret-button')).not.toBeInTheDocument()
+
+    rerender(<OtpCard card={card} showSecret timeWindow={timeWindow} />)
 
     expect(screen.getByTestId('otp-secret')).toHaveTextContent(card.rawSecret)
-    expect(screen.queryByTestId('toggle-secret-button')).not.toBeInTheDocument()
+    expect(screen.getByTitle(card.rawSecret)).toBeInTheDocument()
   })
 
   it('点击复制按钮会复制当前验证码', async () => {

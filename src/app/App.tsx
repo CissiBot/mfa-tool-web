@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { FileDown, FileUp, Plus } from 'lucide-react'
+import { Eye, EyeOff, FileDown, FileUp, Plus } from 'lucide-react'
 
 import { appCardRepository } from '../features/cards'
 import type { CardRecord } from '../lib/storage'
@@ -33,10 +33,13 @@ function App({
   const [cardPendingRemoval, setCardPendingRemoval] = useState<CardRecord | null>(null)
   const [draggedCardId, setDraggedCardId] = useState<string | null>(null)
   const [previewOrderIds, setPreviewOrderIds] = useState<string[] | null>(null)
+  const [showSecrets, setShowSecrets] = useState(false)
   const orderedCards = useMemo(
     () => sortCardsByIds(collection.cards, previewOrderIds),
     [collection.cards, previewOrderIds],
   )
+  const toggleSecretsLabel = showSecrets ? '隐藏密钥' : '显示密钥'
+  const ToggleSecretsIcon = showSecrets ? EyeOff : Eye
 
   const closeWorkspace = useCallback(() => {
     setWorkspaceState(null)
@@ -143,6 +146,25 @@ function App({
 
         <div className="app-toolbar">
           <div className="app-toolbar__actions">
+            <button
+              aria-pressed={showSecrets}
+              className="app-toolbar__toggle-secrets"
+              data-testid="toggle-secret-visibility-button"
+              type="button"
+              onClick={() => {
+                setShowSecrets((current) => !current)
+              }}
+            >
+              <span className="app-toolbar__button-circle" aria-hidden="true" />
+              <span className="app-toolbar__button-icon app-toolbar__button-icon--lead" aria-hidden="true">
+                <ToggleSecretsIcon size={16} strokeWidth={2.2} />
+              </span>
+              <span className="app-toolbar__button-label">{toggleSecretsLabel}</span>
+              <span className="app-toolbar__button-icon app-toolbar__button-icon--trail" aria-hidden="true">
+                <ToggleSecretsIcon size={16} strokeWidth={2.2} />
+              </span>
+            </button>
+
             <div className="app-toolbar__io">
               <ImportExportPanel
                 compact
@@ -181,6 +203,7 @@ function App({
           error={collection.error}
           cards={collection.cards}
           orderedCards={orderedCards}
+          showSecrets={showSecrets}
           repository={cardRepository}
           timeWindow={timeWindow}
           draggedCardId={draggedCardId}

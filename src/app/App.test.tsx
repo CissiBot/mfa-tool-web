@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
+import { maskSecret } from '../features/cards'
 import { createCardRepository, type CardRecord, type StorageError, type StorageLike } from '../lib/storage'
 import { generateTotpCode, getTotpTimeWindow } from '../lib/totp'
 import App from './App'
@@ -24,9 +25,14 @@ describe('App', () => {
   it('首页默认只显示卡片区与添加入口，操作面板按需打开', () => {
     render(<App cardStore={createMockCardStore(createSnapshot())} timeStore={createMockTimeStore()} />)
 
+    const toggleSecretVisibilityButton = screen.getByTestId('toggle-secret-visibility-button')
+    const importButton = screen.getByTestId('import-button')
+
     expect(screen.getByRole('heading', { name: 'MFA 卡片面板' })).toBeInTheDocument()
     expect(screen.getByTestId('open-composer-button')).toBeInTheDocument()
-    expect(screen.getByTestId('import-button')).toBeInTheDocument()
+    expect(toggleSecretVisibilityButton).toHaveTextContent('显示密钥')
+    expect(toggleSecretVisibilityButton.nextElementSibling).toContainElement(importButton)
+    expect(importButton).toBeInTheDocument()
     expect(screen.getByTestId('export-button')).toBeDisabled()
     expect(screen.getByTestId('card-list')).toBeInTheDocument()
     expect(screen.getByTestId('empty-state')).toBeInTheDocument()
@@ -79,7 +85,7 @@ describe('App', () => {
 
     expect(screen.queryByTestId('empty-state')).not.toBeInTheDocument()
     expect(screen.getByText('GitHub')).toBeInTheDocument()
-    expect(screen.getByText('JBSW Y3DP EH PK3PXP')).toBeInTheDocument()
+    expect(screen.getByTestId('otp-secret')).toHaveTextContent(maskSecret('JBSW Y3DP EH PK3PXP'))
     await waitFor(() => {
       expect(screen.getByTestId('otp-code')).toHaveTextContent(expectedCode)
     })
@@ -115,7 +121,7 @@ describe('App', () => {
     const expectedCode = await createExpectedCode('GEZDGNBVGY3TQOJQ', currentTime)
 
     expect(screen.getByText('AWS')).toBeInTheDocument()
-    expect(screen.getByText('GEZD GNBV GY3T QOJQ')).toBeInTheDocument()
+    expect(screen.getByTestId('otp-secret')).toHaveTextContent(maskSecret('GEZD GNBV GY3T QOJQ'))
 
     await waitFor(() => {
       expect(screen.getByTestId('otp-code')).toHaveTextContent(expectedCode)
@@ -178,9 +184,61 @@ describe('App', () => {
     const expectedCode = await createExpectedCode('GEZDGNBVGY3TQOJQ', currentTime)
 
     await waitFor(() => {
-      expect(screen.getByText('GEZD GNBV GY3T QOJQ')).toBeInTheDocument()
+      expect(screen.getByTestId('otp-secret')).toHaveTextContent(maskSecret('GEZD GNBV GY3T QOJQ'))
       expect(screen.getByTestId('otp-code')).toHaveTextContent(expectedCode)
     })
+  })
+
+  it('点击显示密钥按钮后会统一切换所有卡片的密钥显示状态', async () => {
+    const storage = createMemoryStorage()
+    const repository = createCardRepository({ storage })
+    repository.save({
+      id: 'card-github',
+      rawSecret: 'JBSW Y3DP EH PK3PXP',
+      normalizedSecret: 'JBSWY3DPEHPK3PXP',
+      note: 'GitHub',
+      color: 'blue',
+      createdAt: '2026-04-12T00:00:00.000Z',
+      updatedAt: '2026-04-12T00:00:00.000Z',
+    })
+    repository.save({
+      id: 'card-aws',
+      rawSecret: 'GEZD GNBV GY3T QOJQ',
+      normalizedSecret: 'GEZDGNBVGY3TQOJQ',
+      note: 'AWS',
+      color: 'green',
+      createdAt: '2026-04-12T00:00:00.000Z',
+      updatedAt: '2026-04-12T00:00:00.000Z',
+    })
+
+    render(
+      <App
+        cardStore={createCardCollectionStore({ repository, targetWindow: undefined })}
+        cardRepository={repository}
+        timeStore={createMockTimeStore()}
+      />,
+    )
+
+    const toggleButton = screen.getByTestId('toggle-secret-visibility-button')
+
+    expect(toggleButton).toHaveTextContent('显示密钥')
+    expect(toggleButton).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByTestId('card-card-github')).toHaveTextContent(maskSecret('JBSW Y3DP EH PK3PXP'))
+    expect(screen.getByTestId('card-card-aws')).toHaveTextContent(maskSecret('GEZD GNBV GY3T QOJQ'))
+
+    fireEvent.click(toggleButton)
+
+    expect(toggleButton).toHaveTextContent('隐藏密钥')
+    expect(toggleButton).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByTestId('card-card-github')).toHaveTextContent('JBSW Y3DP EH PK3PXP')
+    expect(screen.getByTestId('card-card-aws')).toHaveTextContent('GEZD GNBV GY3T QOJQ')
+
+    fireEvent.click(toggleButton)
+
+    expect(toggleButton).toHaveTextContent('显示密钥')
+    expect(toggleButton).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByTestId('card-card-github')).toHaveTextContent(maskSecret('JBSW Y3DP EH PK3PXP'))
+    expect(screen.getByTestId('card-card-aws')).toHaveTextContent(maskSecret('GEZD GNBV GY3T QOJQ'))
   })
 
   it('删除卡片前需要确认，取消后卡片保持不变', async () => {

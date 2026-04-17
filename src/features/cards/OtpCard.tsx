@@ -13,11 +13,12 @@ import type { CardRecord } from '../../lib/storage'
 import type { CardRepository } from '../../lib/storage/repository'
 import { generateTotpCode, type TotpTimeWindow } from '../../lib/totp'
 import { appCardRepository } from './defaults'
-import { getCardNoteLabel } from './display'
+import { getCardNoteLabel, maskSecret } from './display'
 
 export interface OtpCardProps {
   card: CardRecord
   timeWindow: TotpTimeWindow
+  showSecret?: boolean
   frameAccent?: string
   repository?: CardRepository
   onRequestRemove?: () => void
@@ -38,6 +39,7 @@ const OTP_CODE_PLACEHOLDER = '------'
 export function OtpCard({
   card,
   timeWindow,
+  showSecret = false,
   frameAccent,
   repository = appCardRepository,
   onRequestRemove,
@@ -70,6 +72,7 @@ export function OtpCard({
     [frameAccent, progressRatio],
   )
   const noteLabel = getCardNoteLabel(card.note)
+  const secretValue = showSecret ? card.rawSecret : maskSecret(card.rawSecret)
 
   useEffect(() => {
     const progressBar = progressBarRef.current
@@ -168,8 +171,8 @@ export function OtpCard({
 
           <section className="otp-card__cell otp-card__cell--secret" aria-label="密钥">
             <span className="otp-card__meta-label">密钥</span>
-            <p className="otp-card__secret" data-testid="otp-secret" title={card.rawSecret}>
-              {card.rawSecret}
+            <p className="otp-card__secret" data-testid="otp-secret" title={showSecret ? card.rawSecret : undefined}>
+              {secretValue}
             </p>
           </section>
         </div>

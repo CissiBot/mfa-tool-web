@@ -30,7 +30,7 @@
 
 ## Overview
 
-This project turns your common TOTP codes into a manageable card list. The current page layout centers on the card panel: the top bar provides **Import JSON**, **Export JSON**, and **Add Card** actions, while the main area renders the OTP card list. Creating and editing cards happens inside an overlay workspace instead of a permanent form on the homepage.
+This project turns your common TOTP codes into a manageable card list. The current page layout centers on the card panel: the top bar provides **Show Secrets / Hide Secrets**, **Import JSON**, **Export JSON**, and **Add Card** actions, while the main area renders the OTP card list. Creating and editing cards happens inside an overlay workspace instead of a permanent form on the homepage.
 
 All OTP calculation happens in the browser, and the current implementation is fixed to standard TOTP: `SHA-1`, `6` digits, and a `30`-second period.
 
@@ -38,6 +38,7 @@ All OTP calculation happens in the browser, and the current implementation is fi
 
 - **Local card management**: create, edit, and delete cards, then refresh the list immediately after saving
 - **Live codes**: generate TOTP codes in the browser and show the refresh progress
+- **Secret visibility control**: hide raw secrets by default and reveal or mask them again with one global toggle
 - **Quick copy**: copy the current 6-digit code to the clipboard with one click
 - **Ordering**: reorder cards with drag and drop or keyboard controls, then persist the result locally
 - **Import and export**: import and export plain JSON with per-item validation feedback
@@ -65,7 +66,8 @@ If you need stronger isolation, leak prevention, multi-device sync, or organizat
 
 ### View, copy, and edit
 
-- Each card shows the note, raw secret text, and current OTP code.
+- Each card shows the note, the secret text in either masked or revealed form, and the current OTP code.
+- Raw secrets are hidden for all cards by default; click **Show Secrets** in the top bar to reveal them, then click **Hide Secrets** to mask them again.
 - Click **Copy** to write the current code to the clipboard.
 - You can open separate workspaces for **Edit Note** and **Edit Secret**.
 - Deletion always shows a confirmation dialog, and canceling leaves the existing data unchanged.

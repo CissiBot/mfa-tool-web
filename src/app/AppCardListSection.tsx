@@ -21,6 +21,7 @@ interface AppCardListSectionProps {
   error: StorageError | null
   cards: CardRecord[]
   orderedCards: CardRecord[]
+  showSecrets: boolean
   repository: CardRepository
   timeWindow: TotpTimeWindow
   draggedCardId: string | null
@@ -124,6 +125,7 @@ export function AppCardListSection({
   error,
   cards,
   orderedCards,
+  showSecrets,
   repository,
   timeWindow,
   draggedCardId,
@@ -608,6 +610,7 @@ export function AppCardListSection({
                   ) : (
                     <CardPreview
                       card={card}
+                      showSecret={showSecrets}
                       frameAccent={frameAccentByCardId.get(card.id)}
                       repository={repository}
                       timeWindow={timeWindow}

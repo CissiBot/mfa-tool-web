@@ -62,6 +62,7 @@
 }
 
 .app-toolbar__add,
+.app-toolbar__toggle-secrets,
 .app-toolbar__io .io-actions button {
   position: relative;
   overflow: hidden;
@@ -171,6 +172,7 @@
 }
 
 .app-toolbar__add:hover,
+.app-toolbar__toggle-secrets:hover,
 .app-toolbar__io .io-actions button:hover {
   transform: translateY(-1px);
   border-radius: 14px;
@@ -182,23 +184,27 @@
 }
 
 .app-toolbar__add:hover .app-toolbar__button-label,
+.app-toolbar__toggle-secrets:hover .app-toolbar__button-label,
 .app-toolbar__io .io-actions button:hover .app-toolbar__button-label {
   transform: translateX(-8px);
 }
 
 .app-toolbar__add:hover .app-toolbar__button-icon--lead,
+.app-toolbar__toggle-secrets:hover .app-toolbar__button-icon--lead,
 .app-toolbar__io .io-actions button:hover .app-toolbar__button-icon--lead {
   transform: translate(-24px, -50%);
   opacity: 0;
 }
 
 .app-toolbar__add:hover .app-toolbar__button-icon--trail,
+.app-toolbar__toggle-secrets:hover .app-toolbar__button-icon--trail,
 .app-toolbar__io .io-actions button:hover .app-toolbar__button-icon--trail {
   transform: translate(0, -50%);
   opacity: 1;
 }
 
 .app-toolbar__add:hover .app-toolbar__button-circle,
+.app-toolbar__toggle-secrets:hover .app-toolbar__button-circle,
 .app-toolbar__io .io-actions button:hover .app-toolbar__button-circle {
   width: 220px;
   height: 220px;
@@ -212,6 +218,7 @@
 }
 
 .app-toolbar__add:active,
+.app-toolbar__toggle-secrets:active,
 .app-toolbar__io .io-actions button:active {
   transform: scale(0.95);
   box-shadow:
@@ -220,9 +227,14 @@
 }
 
 .app-toolbar__add:focus-visible,
+.app-toolbar__toggle-secrets:focus-visible,
 .app-toolbar__io .io-actions button:focus-visible {
   outline: none;
   box-shadow: var(--shadow-focus);
+}
+
+.app-toolbar__toggle-secrets {
+  --toolbar-button-accent: var(--color-accent-cyan);
 }
 
 .workspace-panel__close:focus-visible {
